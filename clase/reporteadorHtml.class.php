@@ -82,7 +82,6 @@ function mostrarReporte($configuracion,$registro,$nombre,$titulo)
             ?>
 
             <link rel="stylesheet" href="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/css/jPages.css">
-
             <script src="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/js/jPages.js"></script>
             <!-- permite la paginacion-->        
             <script>
@@ -122,11 +121,11 @@ function mostrarReporte($configuracion,$registro,$nombre,$titulo)
                                                                 <div id="dvData">
                                                                     <table class="bordered" width="100%">
                                                                         <tr class='cuadro_color'>
-                                                                            <th colspan='<? echo count($cabecera);?>' class='estilo_th'> <? echo strtoupper($titulo);?> </th>
+                                                                            <th colspan='<? echo count($cabecera);?>' class='titulo_th'> <? echo strtoupper($titulo);?> </th>
                                                                        </tr> 
                                                                         <tr class='cuadro_color'>
                                                                             <? foreach($cabecera as $cab=>$value)
-                                                                                        { ?><th> <?echo ucfirst(strtolower(str_replace('_',' ',$cabecera[$cab])));?> </th>
+                                                                                        { ?><th  class='subtitulo_th'> <?echo ucfirst(strtolower(str_replace('_',' ',$cabecera[$cab])));?> </th>
                                                                                           <?
                                                                                         }
                                                                             ?>
@@ -135,15 +134,15 @@ function mostrarReporte($configuracion,$registro,$nombre,$titulo)
                                                                          <?         foreach ($registro as $key => $value)
                                                                                         {?><tr><?
                                                                                                 foreach($cabecera as $cab=>$value)
-                                                                                                    { ?><td class='texto_elegante estilo_td'><?
+                                                                                                    { ?><td class='texto_elegante estilo_td' ><?
                                                                                                         //$dato=(strtolower(substr($cabecera[$cab],0,5))=='valor'?isset($registro[$key][$cabecera[$cab]])?number_format($registro[$key][$cabecera[$cab]],2, ',', '.'):'':isset($registro[$key][$cabecera[$cab]])?$registro[$key][$cabecera[$cab]]:'');
                                                                                                         if (isset($registro[$key][$cabecera[$cab]]) && strtolower(substr($cabecera[$cab],0,5))=='valor')
                                                                                                             {$dato=number_format($registro[$key][$cabecera[$cab]],2, '.', ',');}
                                                                                                         elseif (!isset($registro[$key][$cabecera[$cab]]))
                                                                                                              {$dato='';}    
                                                                                                         else{ $dato=$registro[$key][$cabecera[$cab]];}
-                                                                                                        echo $dato;
-                                                                                                      ?></td><?
+                                                                                                        echo "&nbsp;".$dato."&nbsp;";
+                                                                                                        ?></td><?
                                                                                                     } 
                                                                                         ?></tr><?
                                                                                         }//fin for

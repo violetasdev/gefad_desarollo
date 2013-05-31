@@ -64,9 +64,9 @@ class sql_adminCumplidoContratista extends sql
 				$cadena_sql=" SELECT CDP.NUMERO_DISPONIBILIDAD,";
                                 $cadena_sql.=" CDP.FECHA_DISPONIBILIDAD,";
                                 $cadena_sql.=" CDP.VALOR,";
-                                $cadena_sql.=" CDPRUBRO.INTERNO_RUBRO";
+                                $cadena_sql.=" CDPRUBRO.RUBRO_INTERNO";
                                 $cadena_sql.=" FROM CO.CO_MINUTA_CDP CDP";
-                                $cadena_sql.=" INNER JOIN CO.CO_SOL_CDP_RUBRO CDPRUBRO ON CDP.VIGENCIA=CDPRUBRO.VIGENCIA AND CDPRUBRO.NUMERO_CDP=CDP.NUMERO_DISPONIBILIDAD AND TRIM(CDPRUBRO.ESTADO_CDP)='APROBADO'";
+                                $cadena_sql.=" INNER JOIN PR.PR_DISPONIBILIDAD_RUBRO CDPRUBRO ON CDP.VIGENCIA=CDPRUBRO.VIGENCIA AND CDP.CODIGO_UNIDAD_EJECUTORA=CDPRUBRO.CODIGO_UNIDAD_EJECUTORA AND CDPRUBRO.NUMERO_DISPONIBILIDAD=CDP.NUMERO_DISPONIBILIDAD ";
                                 $cadena_sql.=" WHERE CDP.INTERNO_MC= ".$variable['cod_minuta_contrato'];
                                 $cadena_sql.=" AND CDP.VIGENCIA=".$variable['vigencia'];
                                 $cadena_sql.=" AND CDP.CODIGO_UNIDAD_EJECUTORA=".$variable['cod_unidad_ejecutora'];
@@ -98,20 +98,20 @@ class sql_adminCumplidoContratista extends sql
                             
                         case "datos_orden_pago":
                                 $cadena_sql=" SELECT DISTINCT";
-                                $cadena_sql.=" DET_OP.VIGENCIA AS VIGENCIA, ";
-                                $cadena_sql.=" DET_OP.RUBRO_INTERNO AS RUBRO,";
-                                $cadena_sql.=" DET_OP.CODIGO_COMPANIA AS CODIGO_COMPANIA,";
-                                $cadena_sql.=" DET_OP.CODIGO_UNIDAD_EJECUTORA AS COD_UNIDAD_EJEC, ";
-                                $cadena_sql.=" DET_OP.CONSECUTIVO_ORDEN AS NUMERO_ORDEN, ";
-                                $cadena_sql.=" OP.TER_ID AS ID_TERCERO,";
+                                $cadena_sql.=" DET_OP.VIGENCIA                  AS VIGENCIA, ";
+                                $cadena_sql.=" DET_OP.RUBRO_INTERNO             AS RUBRO,";
+                                $cadena_sql.=" DET_OP.CODIGO_COMPANIA           AS CODIGO_COMPANIA,";
+                                $cadena_sql.=" DET_OP.CODIGO_UNIDAD_EJECUTORA   AS COD_UNIDAD_EJEC, ";
+                                $cadena_sql.=" DET_OP.CONSECUTIVO_ORDEN         AS NUMERO_ORDEN, ";
+                                $cadena_sql.=" OP.TER_ID                        AS ID_TERCERO,";
                                 $cadena_sql.=" DECODE(OP.FECHA_APROBACION,'',TO_DATE(EGR.FECHA_REGISTRO,'DD-MM-YY'),TO_DATE(OP.FECHA_APROBACION,";
-                                $cadena_sql.=" 'DD-MM-YY')) AS FECHA_ORDEN,";
-                                $cadena_sql.=" DET_OP.NUMERO_DISPONIBILIDAD AS NUMERO_DISPONIBILIDAD,";
-                                $cadena_sql.=" DET_OP.VALOR AS VALOR_OP, ";
+                                $cadena_sql.=" 'DD-MM-YY'))                     AS FECHA_ORDEN,";
+                                $cadena_sql.=" DET_OP.NUMERO_DISPONIBILIDAD     AS NUMERO_DISPONIBILIDAD,";
+                                $cadena_sql.=" DET_OP.VALOR                     AS VALOR_OP, ";
                                 $cadena_sql.=" DECODE(SUBSTR(OP.ESTADO,9,1),'1','ANULADO',SUBSTR(OP.ESTADO,4,1),'1','VIGENTE') AS ESTADO,";
                                 $cadena_sql.=" TO_DATE(EGR.FECHA_REGISTRO,'DD-MM-YY') AS FECHA_PAGO";
-                                $cadena_sql.=" FROM OGT_V_PREDIS_DETALLE DET_OP";
-                                $cadena_sql.=" INNER JOIN PR_COMPROMISOS COMP ";
+                                $cadena_sql.=" FROM OGT.OGT_V_PREDIS_DETALLE DET_OP";
+                                $cadena_sql.=" INNER JOIN PR.PR_COMPROMISOS COMP ";
                                 $cadena_sql.=" ON DET_OP.VIGENCIA = COMP.VIGENCIA ";
                                 $cadena_sql.=" AND DET_OP.CODIGO_COMPANIA = COMP.CODIGO_COMPANIA ";
                                 $cadena_sql.=" AND DET_OP.CODIGO_UNIDAD_EJECUTORA = COMP.CODIGO_UNIDAD_EJECUTORA ";
@@ -477,16 +477,17 @@ class sql_adminCumplidoContratista extends sql
                                 $cadena_sql.=" dtn_pensionado,";
                                 $cadena_sql.=" dtn_pago_saldo_menores,";
                                 $cadena_sql.=" dtn_pasante_monitoria ,";
-                                $cadena_sql.=" dtn_estado) ";
+                                $cadena_sql.=" dtn_estado,";
+                                $cadena_sql.=" dtn_declarante) ";
                                 $cadena_sql.=" VALUES(";
                                 $cadena_sql.="'".$variable['id_cumplido']."',";
                                 $cadena_sql.="'".$variable['vigencia']."',";
                                 $cadena_sql.="'0',";
-                                $cadena_sql.="'0',";
+                                $cadena_sql.="'".$variable['saldo_contrato']."',";
                                 $cadena_sql.="'".$variable['finicial_cumplido']."',";
                                 $cadena_sql.="'".$variable['ffinal_cumplido']."',";
                                 $cadena_sql.="'".$variable['num_dias']."',";
-                                $cadena_sql.="' ',";
+                                $cadena_sql.="'".$variable['regimen_comun']."',";
                                 $cadena_sql.="'".$variable['valor_liq_antes_iva']."',";
                                 $cadena_sql.="'0',";
                                 $cadena_sql.="'0',";
@@ -499,14 +500,15 @@ class sql_adminCumplidoContratista extends sql
                                 $cadena_sql.="'0',";
                                 $cadena_sql.="'0',";
                                 $cadena_sql.="'".$variable['arp']."',";
-                                $cadena_sql.="'0',";
+                                $cadena_sql.="'".$variable['cooperativas_depositos']."',";
                                 $cadena_sql.="'".$variable['afc']."',";
                                 $cadena_sql.="'".$variable['salud']."',";
                                 $cadena_sql.="'".$variable['pension']."',";
+                                $cadena_sql.="'".$variable['pensionado']."',";
                                 $cadena_sql.="' ',";
-                                $cadena_sql.="' ',";
-                                $cadena_sql.="' ',";
-                                $cadena_sql.="'A'";
+                                $cadena_sql.="'".$variable['pasante']."',";
+                                $cadena_sql.="'".$variable['estado']."',";
+                                $cadena_sql.="'".$variable['declarante']."'";
                                 $cadena_sql.=" )";
                                 break;
                             
@@ -546,7 +548,58 @@ class sql_adminCumplidoContratista extends sql
                                 $cadena_sql.=" )";
                                 
                                 break;
-            
+                            
+                        case "novedad_cooperativas_contrato":
+                        
+                                $cadena_sql=" SELECT ";
+                                $cadena_sql.=" nov_id,";
+                                $cadena_sql.=" nov_cto_vigencia,";
+                                $cadena_sql.=" nov_cto_num,";
+                                $cadena_sql.=" nov_id_tipo,";
+                                $cadena_sql.=" nov_fecha,";
+                                $cadena_sql.=" nov_fecha_ini,";
+                                $cadena_sql.=" nov_fecha_fin,";
+                                $cadena_sql.=" nov_valor,";
+                                $cadena_sql.=" nov_descripcion,";
+                                $cadena_sql.=" nov_cta_id ";
+                                $cadena_sql.=" FROM fn_nom_novedad ";
+                                $cadena_sql.=" WHERE nov_id_tipo=3";
+                                $cadena_sql.=" AND nov_estado='A'";
+                                $cadena_sql.=" AND nov_cto_vigencia= ".$variable['vigencia'];
+                                $cadena_sql.=" AND nov_cto_num=".$variable['cod_contrato'];
+                                $cadena_sql.=" AND nov_fecha_ini <='".$variable['finicio_per_pago']."'";
+                                $cadena_sql.=" AND nov_fecha_fin >='".$variable['ffinal_per_pago']."'";
+                                break;
+                            
+                        case "acta_inicio":
+				$cadena_sql=" SELECT ";
+                                $cadena_sql.=" aci_id,";
+                                $cadena_sql.=" aci_cto_num,";
+                                $cadena_sql.=" aci_cto_vigencia ,";
+                                $cadena_sql.=" aci_fecha_inicio,";
+                                $cadena_sql.=" aci_fecha_finalizacion,";
+                                $cadena_sql.=" aci_cno_codigo ,";
+                                $cadena_sql.=" aci_fecha_reg ";
+                                $cadena_sql.=" FROM  fn_nom_acta_inicio ";
+                                $cadena_sql.=" WHERE aci_cto_num= ".$variable['cod_contrato'];
+                                $cadena_sql.=" AND aci_cto_vigencia=".$variable['vigencia_contrato'];
+                                $cadena_sql.=" AND aci_estado_reg='A'";
+                                break;		
+
+                        case "aspectos_contratista":
+				$cadena_sql=" SELECT ";
+                                $cadena_sql.=" con_tipo_id,";
+                                $cadena_sql.=" con_num_id,";
+                                $cadena_sql.=" con_interno_proveedor ,";
+                                $cadena_sql.=" con_regimen_comun,";
+                                $cadena_sql.=" con_declarante,";
+                                $cadena_sql.=" con_pensionado ,";
+                                $cadena_sql.=" con_pasante ";
+                                $cadena_sql.=" FROM  fn_nom_datos_contratista ";
+                                $cadena_sql.=" WHERE con_tipo_id= '".$variable['tipo_id']."'";
+                                $cadena_sql.=" AND con_num_id='".$variable['identificacion']."'";
+                                break;		
+
 			default:
 				$cadena_sql="";
 				break;

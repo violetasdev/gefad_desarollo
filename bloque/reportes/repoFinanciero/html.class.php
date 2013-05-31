@@ -45,11 +45,12 @@ class html_reporteFinanciero {
     function form_muestra_parametros($parametrosHtml){
             $tab=0;
             $this->formulario = "repoFinanciero";
-            
-            ?>
+          //  var_dump(var_dump($parametrosHtml));
+       ?>
         <table width="100%" align="center" border="0" cellpadding="10" cellspacing="0">
          <tr class="texto_subtitulo">
-           <td><?echo $parametrosHtml[0]['titulo'];?><br>
+           <td><br><br>
+               <?echo $parametrosHtml[0]['titulo'];?><br><br>
                <hr class="hr_subtitulo">
            </td>
          </tr>       
@@ -58,19 +59,55 @@ class html_reporteFinanciero {
            <td>
              <form enctype='multipart/form-data' method='POST' action='index.php' name='<? echo $this->formulario;?>'>
                <table align="center"  border="0" width="98%" >
-                
                 <?
                    foreach($parametrosHtml as $key=>$value)
                           {  
                           ?><tr> 
-                             <td class='texto_elegante estilo_td' valign='top' width="120px" >
+                             <td class='texto_elegante ' valign='top' width="120px" >
                                <? echo ucfirst($parametrosHtml[$key]['nombre']).": ";?>   
                               </td> 
-                              <td class='texto_elegante estilo_td' valign='top' >
+                              <td class='texto_elegante ' valign='top' >
                                   <?
                               //verifica que tipo de caja debe armar
                               switch($parametrosHtml[$key]['caja_html'])
                                   {  case 'combo':
+                                                   if($parametrosHtml[$key]['actualiza'])    
+                                                        { //identifica que parametros de deben enviar registrados en la base de datos
+                                                           $controlPar = explode("|", $parametrosHtml[$key]['enviar']);
+                                                           //identifica cada uno de lso parametros a enviar
+                                                           $control_param='';
+                                                           $post_param='';
+                                                            foreach($controlPar as $par=>$value) 
+                                                                { //rescata los valores del formulario a envia
+                                                                  if($controlPar[$par] != $parametrosHtml[$key]['nombre'] )
+                                                                       { $control_param.= $controlPar[$par]."=$(".$this->formulario.".".$controlPar[$par].").val(); ";
+                                                                         $post_param.= $controlPar[$par].":".$controlPar[$par].", ";
+                                                                       }
+                                                                }
+
+                                                            ?>
+                                                            <script language="javascript">
+                                                             $(document).ready(function()
+                                                                                {  $("#<? echo $parametrosHtml[$key]['nombre'];?>").change(function () 
+                                                                                    {      reporte=<? echo $parametrosHtml[$key]['id_reporte'];?>;
+                                                                                           parametro='<? echo $parametrosHtml[$key]['actualiza'];?>';
+                                                                                           <? echo $control_param;?>
+                                                                                      $("#<? echo $parametrosHtml[$key]['nombre'];?> option:selected" ).each(function ()
+                                                                                           {<? echo $parametrosHtml[$key]['nombre'];?>=$(this).val();        
+                                                                                            $.post("<?echo $this->configuracion["host"].$this->configuracion["site"].$this->configuracion["bloques"].'/reportes/repoFinanciero/combos.php';?>", 
+                                                                                                    {   reporte:reporte, parametro:parametro,
+                                                                                                        <? echo $post_param;?> 
+                                                                                                        <? echo $parametrosHtml[$key]['nombre'];?>: <? echo $parametrosHtml[$key]['nombre'];?> 
+                                                                                                    }, function(data) 
+                                                                                                        {$("#<? echo $parametrosHtml[$key]['actualiza'];?>").html(data);
+                                                                                                        }    
+                                                                                                  );            
+                                                                                           });
+                                                                                     })
+                                                                                });
+                                                             </script>    
+                                                            <?   
+                                                            }
                                                   unset($combo);
                                                   //prepara los datos como se deben mostrar en el combo
                                                   $combo[0][0]='0';
@@ -96,11 +133,11 @@ class html_reporteFinanciero {
                            </tr> 
                        <? }  ?>
                  <tr>
-                    <td class='estilo_td' align='center' colspan ="2"><br> 
+                    <td align='center' colspan ="2"><br> 
                           <input type='hidden' name='action' value='repoFinanciero'>
                           <input type='hidden' name='opcion' value='generar'> 
-                          <input type='hidden' name='reporte' value='<? echo $parametrosHtml[0]['reporte'];?>'> 
-                          <input type='hidden' name='pagina' value='reportesFinanciero'> 
+                          <input type='hidden' name='reporte' value='<? echo $parametrosHtml[0]['reporte']; ?>'> 
+                          <input type='hidden' name='pagina' value='<? echo $parametrosHtml[0]['pagina']; ?>'> 
                           <input value="Generar" name="generar_reporte" tabindex="<?= $tab++ ?>" type="button" onclick="document.forms['<? echo $this->formulario?>'].submit()">
                     </td>
                 </tr>
@@ -122,8 +159,6 @@ class html_reporteFinanciero {
             $reporte = new reporteador();
             $reporte->mostrarReporte($configuracion,$registro,$nombre,$titulo);
         }
-        
-
         /**
          * funcion que muestra la información del reporte
          */
@@ -134,9 +169,6 @@ class html_reporteFinanciero {
             $cadena=htmlentities($cadena, ENT_COMPAT, "UTF-8");
             alerta::sin_registro($configuracion,$cadena);
         }        
-        
-
-
 
 }
 ?>

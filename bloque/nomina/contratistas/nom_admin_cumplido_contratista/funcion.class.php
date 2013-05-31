@@ -115,7 +115,6 @@ ________________________________________________________________________________
         function solicitarCumplido(){
             $contratos = $this->consultarContratos($this->identificacion);
             $meses = $this->mesesContrato($contratos);
-            //var_dump($contratos);exit;
             foreach ($contratos as $key => $contrato) {
                 $contrato['NUM_CONTRATO']=(isset($contrato['NUM_CONTRATO'])?$contrato['NUM_CONTRATO']:'');
                 $datos_contrato[$key][0]=$contrato['VIGENCIA']."-".$contrato['INTERNO_OC']."-".$contrato['NUM_CONTRATO'];
@@ -137,12 +136,13 @@ ________________________________________________________________________________
             $mes_cumplido=(isset($_REQUEST['mes_cumplido'])?$_REQUEST['mes_cumplido']:'');
             $anio = substr($mes_cumplido, 0,4);        
             $mes = substr($mes_cumplido, 4,2);
+            //verifica que no exista una solicitud del mismo año y mes para ese contrato
             $datos_solicitud =$this->consultarExisteSolicitud($vigencia, $cod_contrato,$anio,$mes);
             
             if(!is_array($datos_solicitud) ){
+                    //consultamos datos del contrato y contratista
                     $contrato = $this->consultarDatosContrato($interno_oc,$vigencia);
                     $cuenta = $this->consultarDatosCta($contrato[0]['INTERNO_PROVEEDOR']);
-
                     $contratista = $this->consultarDatosContratista($contrato[0]['NUM_IDENTIFICACION']);
                     $disponibilidad = $this->consultarDatosDisponibilidad($contrato[0]['INTERNO_MC'],$contrato[0]['CODIGO_UNIDAD_EJECUTORA'],$vigencia);
                     $nro_cdp = $disponibilidad[0]['NUMERO_DISPONIBILIDAD']; 
@@ -152,14 +152,33 @@ ________________________________________________________________________________
                     $tipo_id_contratista = $contrato[0]['TIPO_IDENTIFICACION'];
                     $tipo_contrato = $this->consultarTipoContrato($vigencia,$contrato[0]['CODIGO_UNIDAD_EJECUTORA'],$registroPresupuestal[0]['NUMERO_REGISTRO']);
                     $novedades = $this->consultarDatosNovedades( $cod_contrato,$vigencia);
+                    $nivel_arp = $this->buscarNivelARP($novedades);
+                    $id_tipo_nomina = $this->obtenerConceptoTipoNomina($cod_contrato,$vigencia);
+                    $aspectos = $this->consultarAspectoContratista($tipo_id_contratista, $cod_contratista);
                     
-                    //var_dump($contrato);exit;
+                    //se validan los datos requeridos para el cumplido 
                     $valida_contratista = $this->validaContratista($contratista);
                     if($valida_contratista!='ok'){
                         $cadena = "Falta información de contratista";
                         $this->htmlCumplido->mensajeAlerta($cadena);
                     }
-
+                    
+                    if($nivel_arp ==0){
+                        $cadena = "Falta información de nivel de ARP";
+                        $this->htmlCumplido->mensajeAlerta($cadena);
+                    }
+                    
+                    $valida_aspectos = $this->validaAspectos($aspectos);
+                    if($valida_aspectos !='ok'){
+                        $cadena = "Falta información ".$valida_aspectos[0];
+                        $this->htmlCumplido->mensajeAlerta($cadena);
+                    }
+                    
+                    if($id_tipo_nomina ==''){
+                        $cadena = "Falta información del tipo de nomina";
+                        $this->htmlCumplido->mensajeAlerta($cadena);
+                    }
+                    
                     $valida_contrato = $this->validaContrato($contrato,$tipo_contrato);
                     if($valida_contrato!='ok'){
                         $cadena = "Falta información de contrato";
@@ -172,51 +191,54 @@ ________________________________________________________________________________
                         $this->htmlCumplido->mensajeAlerta($cadena);
                     }
 
-                    if($valida_contratista=='ok' && $valida_contrato=='ok' && $valida_certificados=='ok' ){
+                    if($valida_contratista=='ok' && $valida_contrato=='ok' && $valida_certificados=='ok'  && $nivel_arp>0 && $id_tipo_nomina !='' && $valida_aspectos=='ok'){
                                 $this->htmlCumplido->mostrarMensajeVerificacion();
                     }
-                    
-                    if($valida_contratista=='ok' && $valida_contrato=='ok' && $valida_certificados=='ok' ){
-                            $this->revisarCuentasBancarias($cod_contratista,$tipo_id_contratista,$cuenta);
-                             $datos_solicitud= array('finicio_contrato'=>$contrato[0]['FECHA_INICIO'],
+                    //se verifica que halla pasado la validacion de datos para mostrar los datos de la solicitud
+                    if($valida_contratista=='ok' && $valida_contrato=='ok' && $valida_certificados=='ok' && $nivel_arp>0 && $id_tipo_nomina !='' && $valida_aspectos=='ok'){
+                                $this->revisarCuentasBancarias($cod_contratista,$tipo_id_contratista,$cuenta);
+                                $datos_solicitud= array('finicio_contrato'=>$contrato[0]['FECHA_INICIO'],
                                                     'ffinal_contrato'=>$contrato[0]['FECHA_FINAL'],
                                                     'valor_contrato'=>$contrato[0]['CUANTIA'],
-                                                    'dias_contrato'=>360,
+                                                    'dias_contrato'=>  $this->calcularDiasContrato($contrato[0]['FECHA_INICIO'], $contrato[0]['FECHA_FINAL']),
+                                                    'saldo_contrato'=>  $this->calcularSaldoContrato($contrato,$registroPresupuestal,$ordenPago),
                                                     'mes'=>$mes,
                                                     'anio'=>$anio,
                                                     'vigencia'=>$contrato[0]['VIGENCIA'],
                                                     'num_contrato'=>$contrato[0]['NUM_CONTRATO'],
-                                                    'cod_supervisor'=>$contrato[0]['FUNCIONARIO']
-                                    );
+                                                    'cod_supervisor'=>$contrato[0]['FUNCIONARIO'],
+                                                    'regimen_comun'=>$aspectos[0]['con_regimen_comun'],
+                                                    'declarante'=>$aspectos[0]['con_declarante'],
+                                                    'pensionado'=>$aspectos[0]['con_pensionado'],
+                                                    'pasante'=>$aspectos[0]['con_pasante']);
                                 $solicitud[0]=$datos_solicitud;
-               
                 
                                 $solicitud = $this->asignarValorCumplido($solicitud);
                                 $solicitud = $this->asignarValorParafiscales($solicitud,$novedades);
-                                //var_dump($solicitud);exit;
                                 $solicitud = $this->asignarValorAFC($solicitud);
+                                $solicitud = $this->asignarValorCooperativasYDepositos($solicitud);
                                 
-                            if(count($cuenta)>1){
-                                $info_cuentas = $this->consultarCuentas($cod_contratista,$tipo_id_contratista);
-                                if(is_array($info_cuentas)){    
-                                    foreach ($info_cuentas as $key => $value) {
-                                        $cuentas[$key][0]=$info_cuentas[$key]['id'];
-                                        $cuentas[$key][1]=$info_cuentas[$key]['nombre'];
-                                    }
+                                if(count($cuenta)>1){
+                                        $info_cuentas = $this->consultarCuentas($cod_contratista,$tipo_id_contratista);
+                                        if(is_array($info_cuentas)){    
+                                            foreach ($info_cuentas as $key => $value) {
+                                                $cuentas[$key][0]=$info_cuentas[$key]['id'];
+                                                $cuentas[$key][1]=$info_cuentas[$key]['nombre'];
+                                            }
+                                        }else{
+                                            $cuentas = array(0=>'0');
+
+                                        }
+                                        $this->htmlCumplido->form_envio_solicitud($contrato,$solicitud,$cuentas,"","");
+
                                 }else{
-                                    $cuentas = array(0=>'0');
+                                    $cod_banco = $this->consultarCodigoBanco($cuenta[0]['CODIGO']);
+                                    $num_cta=$cuenta[0]['NRO_CTA'];
+                                    $tipo=$cuenta[0]['TIPO_CTA'];
 
+                                    $cod_relacion = $this->consultarCodigoRelacionCuentas($cod_contratista,$tipo_id_contratista,$cod_banco,$num_cta,$tipo);
+                                    $this->htmlCumplido->form_envio_solicitud($contrato,$solicitud,$cod_relacion,"","");
                                 }
-                               $this->htmlCumplido->form_envio_solicitud($contrato,$solicitud,$cuentas,"","");
-
-                            }else{
-                                $cod_banco = $this->consultarCodigoBanco($cuenta[0]['CODIGO']);
-                                $num_cta=$cuenta[0]['NRO_CTA'];
-                                $tipo=$cuenta[0]['TIPO_CTA'];
-
-                                $cod_relacion = $this->consultarCodigoRelacionCuentas($cod_contratista,$tipo_id_contratista,$cod_banco,$num_cta,$tipo);
-                                $this->htmlCumplido->form_envio_solicitud($contrato,$solicitud,$cod_relacion,"","");
-                            }
                     }
                     $this->mostrarInformacionContratista($interno_oc,$cod_contrato,$vigencia);
 
@@ -258,6 +280,7 @@ ________________________________________________________________________________
                         }else{
                             $novedades ="";
                         }
+                        $contrato[0]['DIAS_CONTRATO']=$this->calcularDiasContrato($contrato[0]['FECHA_INICIO'], $contrato[0]['FECHA_FINAL']);
                         //Obtener el total de registros
 			$totalRoles = $this->totalRegistros($this->configuracion, $this->acceso_db);
                         ?>			
@@ -368,6 +391,7 @@ ________________________________________________________________________________
                             'cod_minuta_contrato'=>$cod_interno_minuta_contrato);
             
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"datos_disponibilidad",$datos);
+            //echo "<br>sql ".$cadena_sql;
             return $datos_disponibilidad = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
     
     }
@@ -385,6 +409,7 @@ ________________________________________________________________________________
                             );
             
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"datos_registro",$datos);
+           // echo "<br>consulta reg ".$cadena_sql;
             return $datos_disponibilidad = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
     
     }
@@ -413,7 +438,7 @@ ________________________________________________________________________________
                             );
             
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"datos_orden_pago",$datos);
-            //echo "cadena ".$cadena_sql;exit;
+           // echo "cadena ".$cadena_sql;exit;
             return $datos_disponibilidad = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
        
     }
@@ -436,10 +461,14 @@ ________________________________________________________________________________
      * Funcion que toma los datos para registrar una solicitud
      */
     function registrarSolicitud(){
-        //var_dump($_REQUEST);exit;
+        //var_dump($_REQUEST);
+        
+        
+            //capturamos datos que llegan del formulario
             $insertado=0;
             $id=$this->obtenerNumeroSolicitud();
             $cod_contrato=(isset($_REQUEST['cod_contrato'])?$_REQUEST['cod_contrato']:''); 
+            $saldo_contrato=(isset($_REQUEST['saldo_contrato'])?$_REQUEST['saldo_contrato']:''); 
             $mes_cumplido=(isset($_REQUEST['mes_cumplido'])?$_REQUEST['mes_cumplido']:''); 
             $vigencia=(isset($_REQUEST['vigencia_contrato'])?$_REQUEST['vigencia_contrato']:''); 
             $finicial=(isset($_REQUEST['finicial_cumplido'])?$_REQUEST['finicial_cumplido']:''); 
@@ -450,8 +479,22 @@ ________________________________________________________________________________
             $pension=(isset($_REQUEST['pension'])?$_REQUEST['pension']:0); 
             $arp=(isset($_REQUEST['arp'])?$_REQUEST['arp']:0); 
             $afc=(isset($_REQUEST['afc'])?$_REQUEST['afc']:0); 
+            $declarante=(isset($_REQUEST['declarante'])?$_REQUEST['declarante']:'');
+            $regimen_comun=(isset($_REQUEST['regimen_comun'])?$_REQUEST['regimen_comun']:'');
+            $pensionado=(isset($_REQUEST['pensionado'])?$_REQUEST['pensionado']:'');
+            $pasante=(isset($_REQUEST['pasante'])?$_REQUEST['pasante']:'');
+            //revisamos si existe novedad de afc
             if($afc){
                 $nov_id_afc=(isset($_REQUEST['nov_id_afc'])?$_REQUEST['nov_id_afc']:0); 
+            }else{
+                $nov_id_afc='';
+            }
+            $cooperativas_depositos=(isset($_REQUEST['cooperativas_depositos'])?$_REQUEST['cooperativas_depositos']:0); 
+            //revisamos si existe novedad de cooperativas
+            if($cooperativas_depositos){
+                $nov_id_cooperativas_depositos=(isset($_REQUEST['nov_id_cooperativas_depositos'])?$_REQUEST['nov_id_cooperativas_depositos']:0); 
+            }else{
+                $nov_id_cooperativas_depositos='';
             }
             $annio = substr($mes_cumplido, 0, 4);
             $mes = substr($mes_cumplido, 4, 2);
@@ -463,13 +506,33 @@ ________________________________________________________________________________
             $cta_id=(isset($_REQUEST['cta_id'])?$_REQUEST['cta_id']:''); 
             $cod_supervisor=(isset($_REQUEST['cod_supervisor'])?$_REQUEST['cod_supervisor']:0); 
             
+            //verificamos que no exista ya una solicitud para ese periodo y contrato
             $datos_solicitud =$this->consultarExisteSolicitud($vigencia, $cod_contrato,$annio,$mes);
             if(!is_array($datos_solicitud) && $vigencia && $cod_contrato && $annio && $mes && $cta_id){
-                    $insertado = $this->insertarSolicitud($id,$vigencia,$cod_contrato,$annio,$mes,$num_dias,$procesado, $estado ,$fecha,$estado_reg, $num_impresion, $valor,$cta_id,$finicial,$ffinal,$cod_supervisor);
+                     $insertado = $this->insertarSolicitud($id,$vigencia,$cod_contrato,$annio,$mes,$num_dias,$procesado, $estado ,$fecha,$estado_reg, $num_impresion, $valor,$cta_id,$finicial,$ffinal,$cod_supervisor);
                      if ($insertado>0){
-                         $tmp_insertado = $this->insertarTemporalDetalleNomina($id,$vigencia,$finicial,$ffinal,$num_dias, $valor,$salud,$pension,$arp,$afc);
+                            
+                         $tmp_insertado = $this->insertarTemporalDetalleNomina($id,$vigencia,$finicial,$ffinal,$num_dias, $valor,$salud,$pension,$arp,$afc,$saldo_contrato,$cooperativas_depositos,$declarante,$regimen_comun,$pensionado,$pasante);
+                         if($tmp_insertado){
+                                //VARIABLES PARA EL LOG
+                                $registro[0] = "INSERTAR";
+                                $registro[1] = $id;
+                                $registro[2] = "CUMPLIDO";
+                                $registro[3] = $id;
+                                $registro[4] = time();
+                                $registro[5] = "Insertar solicitud cumplido ". $id;
+                                $registro[5] .= " - vigencia =". $vigencia;
+                                $registro[5] .= " - cod_contrato =". $cod_contrato;
+                                $registro[5] .= " - anio =". $annio;
+                                $registro[5] .= " - mes =". $mes;
+                                $registro[5] .= " - fecha =". $fecha;
+                                $this->log_us->log_usuario($registro,$this->configuracion);
+                         }
                          if($nov_id_afc){
                                         $this->insertarNovedadCumplido($id,$vigencia,$nov_id_afc);
+                          }
+                          if($nov_id_cooperativas_depositos){
+                                        $this->insertarNovedadCumplido($id,$vigencia,$nov_id_cooperativas_depositos);
                           }
                      }
             }
@@ -540,7 +603,6 @@ ________________________________________________________________________________
                                 'ffinal_cumplido'=>$ffinal,
                                 'cod_supervisor'=>$cod_supervisor);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"insertar_solicitud",$datos_novedad);
-             //echo "cadena ".$cadena_sql;exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_nomina);
     }
@@ -562,7 +624,6 @@ ________________________________________________________________________________
     function consultarUltimoNumeroSolicitud(){
 
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"ultimo_numero_solicitud","");
-            //echo "cadena ".$cadena_sql;exit;
             $datos_novedad = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
             return $datos_novedad[0][0];
     }
@@ -711,7 +772,6 @@ ________________________________________________________________________________
      */
     function consultarCodigoBanco($codigo_sic){
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"codigo_banco",$codigo_sic);
-            //echo $cadena_sql ;exit;
             $datos = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
            return $datos[0][0];
     }
@@ -732,7 +792,6 @@ ________________________________________________________________________________
                             'num_cta'=>$num_cta,
                             'tipo'=>$tipo);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"codigo_cuenta_banco",$datos);
-            //echo $cadena_sql ;exit;
             $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
             return $resultado[0][0];
     }
@@ -770,7 +829,6 @@ ________________________________________________________________________________
     function consultarUltimoNumeroCuentaBanco(){
 
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"ultimo_numero_cuenta_banco","");
-            //echo "cadena ".$cadena_sql;exit;
             $datos = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
             return $datos[0][0];
     }
@@ -795,7 +853,6 @@ ________________________________________________________________________________
                                 'tipo'=>$tipo,
                                 'estado'=>"A");
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"insertar_relacion_cuenta_banco",$datos);
-            //echo "cadena ".$cadena_sql;exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             if ($this->totalAfectados($this->configuracion, $this->acceso_nomina)>0){
                 return $id;
@@ -845,7 +902,6 @@ ________________________________________________________________________________
      */
     function consultarContratos($identificacion){
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"contratos",$identificacion);
-            //echo "<br>cadena ".$cadena_sql;
             $datos_contrato = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
             return $datos_contrato;
     }
@@ -980,6 +1036,7 @@ ________________________________________________________________________________
         
         if(is_array($contratos)){
             foreach ($contratos as $key => $contrato) {
+                $resultado='';
                 $vigencia=$contrato['VIGENCIA'];
                 $cod_contrato=(isset($contrato['NUM_CONTRATO'])?$contrato['NUM_CONTRATO']:'');
                 if($vigencia && $cod_contrato){
@@ -998,7 +1055,7 @@ ________________________________________________________________________________
             $indice=0;
             foreach ($registro as $key => $value) {
                 $arreglos=$value;
-                foreach ($arreglos as $key2 => $arreglo) {
+                foreach ($arreglos as $arreglo) {
                         $cumplidos[$indice]['id'] = $arreglo['id'];
                         $cumplidos[$indice]['vigencia'] =$arreglo['vigencia'];
                         $cumplidos[$indice]['num_contrato'] =$arreglo['num_contrato'];
@@ -1018,7 +1075,9 @@ ________________________________________________________________________________
                         $cumplidos[$indice]['interno_co'] =$arreglo['interno_co'];
                         $cumplidos[$indice]['num_id_contratista'] =$arreglo['num_id_contratista'];
                         $contratista = $this->consultarDatosContratista($cumplidos[$indice]['num_id_contratista']);
-                        $cumplidos[$indice]['nombre_contratista'] =$contratista[0]['PRIMER_NOMBRE']." ".$contratista[0]['SEGUNDO_NOMBRE']." ".$contratista[0]['PRIMER_APELLIDO']." ".$contratista[0]['SEGUNDO_APELLIDO'];
+                        $cumplidos[$indice]['nombre_contratista'] =$contratista[0]['PRIMER_NOMBRE'];
+                        $cumplidos[$indice]['nombre_contratista'] .=" ".(isset($contratista[0]['SEGUNDO_NOMBRE'])?$contratista[0]['SEGUNDO_NOMBRE']:'');
+                        $cumplidos[$indice]['nombre_contratista'] .=" ".$contratista[0]['PRIMER_APELLIDO']." ".$contratista[0]['SEGUNDO_APELLIDO'];
                         
                         $indice++;
 
@@ -1045,7 +1104,6 @@ ________________________________________________________________________________
                             'cod_contrato'=>$cod_contrato,
                             'id_solicitud'=>$id_solicitud);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"solicitudes_cumplido",$datos);
-            //echo "<br>cadena ".$cadena_sql;
             $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
             return $resultado;
         
@@ -1089,7 +1147,6 @@ ________________________________________________________________________________
      */
     function consultarTodasSolicitudesCumplido(){
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"todas_solicitudes_cumplido","");
-            //echo "<br>cadena ".$cadena_sql;
             $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
             return $resultado;
         
@@ -1126,7 +1183,6 @@ ________________________________________________________________________________
         */
        function consultarDocumento($codigo){
             $cadena_sql=$this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"documento",$codigo);
-//            echo "<br>cadena ".$cadena_sql;exit;
             return $resultado=$this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
 		    
        }   
@@ -1139,7 +1195,6 @@ ________________________________________________________________________________
     function asignarValorCumplido($solicitudes){
         if(is_array($solicitudes)){
             foreach ($solicitudes as $key => $solicitud) {
-                //echo $solicitud['finicio_contrato'];exit;
                 $fecha_inicial=$solicitud['finicio_contrato'];
                 $fecha_final=$solicitud['ffinal_contrato'];
                 $valor_contrato=$solicitud['valor_contrato'];
@@ -1151,7 +1206,13 @@ ________________________________________________________________________________
                 $dias_cumplido = $cumplido['dias'];
                 $valor_dia = $this->calcularValorDia($valor_contrato,$tiempo_contrato_dias);
                 $valor_cumplido = $dias_cumplido*$valor_dia;
-                $solicitudes[$key]['valor']=$valor_cumplido;
+                //reviso el saldo si es menor al valor del cumplido asigno este valor
+                $valor_saldo = $solicitud['saldo_contrato'];
+                if($valor_saldo>=$valor_cumplido){
+                    $solicitudes[$key]['valor']=round($valor_cumplido);
+                }else{
+                    $solicitudes[$key]['valor']=$valor_saldo;
+                }
                 $solicitudes[$key]['finicio_cumplido']=$cumplido['finicial'];
                 $solicitudes[$key]['ffinal_cumplido']=$cumplido['ffinal'];
                 $solicitudes[$key]['dias_cumplido']=$dias_cumplido;
@@ -1234,6 +1295,12 @@ ________________________________________________________________________________
             return $valor_dia;
     }
     
+    /**
+     * Funcion para liquidar y asignar a las solicitudes los valores de parafiscales
+     * @param type $solicitudes
+     * @param type $novedades
+     * @return string 
+     */
     function asignarValorParafiscales($solicitudes,$novedades){
         include_once($this->configuracion["raiz_documento"] . $this->configuracion["bloques"]."/nomina/contratistas/nom_admin_cumplido_supervisor". $this->configuracion["clases"] . "/liquidacionNomina.class.php");
         $this->Liquidacion = new liquidacionNomina($this->configuracion);
@@ -1244,10 +1311,10 @@ ________________________________________________________________________________
                 $solicitudes[$key]['salud']=10;
                 $parametro[0]['nombre_parametro']='valor_mes';
                 $parametro[0]['valor_parametro']=$solicitud['valor'];
-                $solicitudes[$key]['salud'] = $this->Liquidacion->obtenerValorLiquidacion(1,'liq_salud',$parametro);
-                $solicitudes[$key]['pension']=$this->Liquidacion->obtenerValorLiquidacion(2,'liq_pension',$parametro);
+                $solicitudes[$key]['salud'] = round($this->Liquidacion->obtenerValorLiquidacion(1,'liq_salud',$parametro));
+                $solicitudes[$key]['pension']=round($this->Liquidacion->obtenerValorLiquidacion(2,'liq_pension',$parametro));
                 $parametro[0]['nivel_arp']=$this->buscarNivelARP($novedades);
-                $solicitudes[$key]['arp']=$this->Liquidacion->obtenerValorLiquidacion(3,'liq_arp',$parametro);
+                $solicitudes[$key]['arp']=round($this->Liquidacion->obtenerValorLiquidacion(3,'liq_arp',$parametro));
                 
             }                       
         }else{
@@ -1272,7 +1339,7 @@ ________________________________________________________________________________
      * @param int $cta_id
      * @return int 
      */
-    function insertarTemporalDetalleNomina($id_cumplido,$vigencia,$finicial,$ffinal,$num_dias, $valor,$salud,$pension,$arp,$afc){
+    function insertarTemporalDetalleNomina($id_cumplido,$vigencia,$finicial,$ffinal,$num_dias, $valor,$salud,$pension,$arp,$afc,$saldo_contrato, $cooperativas,$declarante,$regimen_comun,$pensionado,$pasante){
             $datos_temporales = array('id_cumplido'=>$id_cumplido,
                                 'vigencia'=>$vigencia,
                                 'finicial_cumplido'=>$finicial,
@@ -1282,21 +1349,34 @@ ________________________________________________________________________________
                                 'salud'=>$salud,
                                 'pension'=>$pension,
                                 'arp'=>$arp,
-                                'afc'=>$afc);
+                                'afc'=>$afc,
+                                'cooperativas_depositos'=>$cooperativas,
+                                'saldo_contrato'=>$saldo_contrato,
+                                'estado'=>'SOLICITADO',
+                                'declarante'=>$declarante,
+                                'regimen_comun'=>$regimen_comun,
+                                'pensionado'=>$pensionado,
+                                'pasante'=>$pasante);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"insertar_temporal_detalle_nomina",$datos_temporales);
-             //echo "cadena ".$cadena_sql;//exit;
+            // echo "cadena ".$cadena_sql;//exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_nomina);
     }
 
+    /**
+     * Funcion para buscar el nivel de arp a partir de las novedades
+     * @param <array> $novedades
+     * @return int 
+     */
     function buscarNivelARP($novedades){
         $nivel='0';
-       
-        foreach ($novedades as $novedad) {
-             
-            if($novedad['cod_tipo_nov']=='2' && $novedad['estado_nov']='A' ){
-                $nivel = (int)$novedad['valor_nov'];
-                break;
+        if(is_array($novedades)){
+            foreach ($novedades as $novedad) {
+
+                if($novedad['cod_tipo_nov']=='2' && $novedad['estado_nov']='A' ){
+                    $nivel = (int)$novedad['valor_nov'];
+                    break;
+                }
             }
         }
         return $nivel;
@@ -1327,11 +1407,18 @@ ________________________________________________________________________________
         }else{
             $solicitudes='';
         }
-        //var_dump($solicitudes);exit;
         return $solicitudes;
     }
     
     
+    /**
+     * Funcion que consulta las novedades de tipo AFC
+     * @param int $vigencia
+     * @param int $cod_contrato
+     * @param date $finicio_per_pago
+     * @param date $ffinal_per_pago
+     * @return <array> 
+     */
     function consultarNovedadAFCContrato($vigencia,$cod_contrato,$finicio_per_pago,$ffinal_per_pago){
             $datos= array(  'vigencia'=>$vigencia,
                             'cod_contrato'=>$cod_contrato,
@@ -1339,7 +1426,6 @@ ________________________________________________________________________________
                             'ffinal_per_pago'=>$ffinal_per_pago
                 );
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"novedad_afc_contrato",$datos);
-            //echo "<br>cadena ".$cadena_sql;exit;
             return $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
           
     }
@@ -1359,10 +1445,248 @@ ________________________________________________________________________________
                             'estado'=>'A'
                             );
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"insertar_novedad_cumplido",$datos);
-             //echo "cadena ".$cadena_sql;exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_nomina);
     }
+    
+    /**
+     * Funcion para calcular la cantidad de días de un contrato a partir de la fecha inicial y fecha final de este
+     * @param date $fecha_inicio
+     * @param date $fecha_fin
+     * @return int 
+     */
+    function calcularDiasContrato($fecha_inicio,$fecha_fin){
+        if(strtotime($fecha_inicio) > strtotime($fecha_fin)){
+                echo "ERROR -> la fecha inicial es mayor a la fecha final <br>";
+               exit();
+        }else{
+                    
+                $dia_inicio= substr($fecha_inicio, 8,2);
+                $dia_fin= substr($fecha_fin, 8,2);
+                
+                $dias_mes_inicial = 30 - $dia_inicio + 1;
+                $dias_mes_final = $dia_fin;
+                $meses=$this->calcularCantidadMeses($fecha_inicio,$fecha_fin);
+                $meses=(int)$meses-1;
+                $dias_meses = $meses*30;
+     
+                $dias= $dias_mes_inicial + $dias_meses + $dias_mes_final;
+        }
+      
+        return $dias;
+    }
+    
+    
+    /**
+     * Funcion para calcular la cantidad de meses entre 2 fechas
+     * @param date $fecha_inicio
+     * @param date $fecha_fin
+     * @return int 
+     */
+    function calcularCantidadMeses($fecha_inicio,$fecha_fin){
+        $dia_inicio= substr($fecha_inicio, 8,2);
+        $mes_inicio= substr($fecha_inicio, 5,2);
+        $ano_inicio= substr($fecha_inicio, 0,4);
+
+        $dia_fin= substr($fecha_fin, 8,2);
+        $mes_fin= substr($fecha_fin, 5,2);
+        $ano_fin= substr($fecha_fin, 0,4);
+        $dif_anios = $ano_fin- $ano_inicio;
+                if($dif_anios == 1){
+                    $mes_inicio = 12 - $mes_inicio;
+                    $meses = $mes_fin + $mes_inicio;
+                   
+                   
+                }
+                else{
+                        if($dif_anios == 0){
+                            $meses=$mes_fin - $mes_inicio;
+                           
+                            
+                        }
+                        else{
+                            if($dif_anios > 1){
+                                $mes_inicio = 12 - $mes_inicio;
+                                $meses = $mes_fin + $mes_inicio + (($dif_anios - 1) * 12);
+                                
+                            }
+                            else { exit;    }
+                        }
+                    }
+                    return $meses;
+    }
+    
+    
+    /**
+     * Funcion para calcular el saldo de un contrato de acuerdo a las ordenes de pago
+     * @param <array> $contrato
+     * @param <array> $registroPresupuestal
+     * @param <array> $ordenPago
+     * @return int 
+     */
+    function calcularSaldoContrato($contrato,$registroPresupuestal,$ordenPago){
+        $acumulado = $this->sumarPagos($ordenPago);
+        $total_contrato = $this->calcularValorContrato($registroPresupuestal);
+        $saldo = $total_contrato - $acumulado;
+        return $saldo;
+    }
+    
+    /**
+     * Funcion para sumar las ordenes de pago a partir del arreglo de OP
+     * @param <array> $ordenPago
+     * @return int 
+     */
+    function sumarPagos($ordenPago){
+        $acumulado=0;
+        if(is_array($ordenPago)){
+            foreach ($ordenPago as $op) {
+                $acumulado = $acumulado + $op['VALOR_OP'];
+            }
+        }
+        return $acumulado;
+    }
+    
+    /**
+     * Funcion para sumar los valores de los registros presupuestales de un contrato
+     * @param <array> $registros
+     * @return int 
+     */ 
+    function calcularValorContrato($registros){
+        $acumulado=0;
+        if(is_array($registros)){
+            foreach ($registros as $rp) {
+                $acumulado = $acumulado + $rp['VALOR'];
+            }
+        }
+        return $acumulado;
+    }
+    
+    /**
+     * Funcion para asignar los valores registrados de cooperativas por medio de novedad
+     * @param <array> $solicitudes
+     * @return string 
+     */
+    function asignarValorCooperativasYDepositos($solicitudes){
+        if(is_array($solicitudes)){
+            foreach ($solicitudes as $key => $solicitud) {
+                $vigencia=$solicitud['vigencia'];
+                $num_contrato=$solicitud['num_contrato'];
+                $fecha_inicial_cum=$solicitud['finicio_cumplido'];
+                $fecha_final_cum=$solicitud['ffinal_cumplido'];
+                $cooperativas = $this->consultarNovedadCooperativasContrato($vigencia,$num_contrato,$fecha_inicial_cum,$fecha_final_cum);
+                if(is_array($cooperativas)){
+                    $solicitudes[$key]['valor_cooperativas_depositos']=$cooperativas[0]['nov_valor'];
+                    $solicitudes[$key]['nov_id_cooperativas_depositos']=$cooperativas[0]['nov_id'];
+                }else{
+                    $solicitudes[$key]['valor_cooperativas_depositos']=0;
+                }
+                
+            }                       
+        }else{
+            $solicitudes='';
+        }
+        return $solicitudes;
+    }
+    
+    /**
+     * Funcion para consultar las novedades de tipo cooperativas relacionadas a un contrato
+     * @param int $vigencia
+     * @param int $cod_contrato
+     * @param date $finicio_per_pago
+     * @param date $ffinal_per_pago
+     * @return <array>
+     */
+    function consultarNovedadCooperativasContrato($vigencia,$cod_contrato,$finicio_per_pago,$ffinal_per_pago){
+            $datos= array(  'vigencia'=>$vigencia,
+                            'cod_contrato'=>$cod_contrato,
+                            'finicio_per_pago'=>$finicio_per_pago,
+                            'ffinal_per_pago'=>$ffinal_per_pago
+                );
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"novedad_cooperativas_contrato",$datos);
+            return $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
+          
+    }
+    
+    function buscarConceptoTipoNomina($novedades){
+        $nivel='0';
+        if(is_array($novedades)){
+            foreach ($novedades as $novedad) {
+
+                if($novedad['cod_tipo_nov']=='2' && $novedad['estado_nov']='A' ){
+                    $nivel = (int)$novedad['valor_nov'];
+                    break;
+                }
+            }
+        }
+        return $nivel;
+    }
+    
+    function obtenerConceptoTipoNomina($cod_contrato,$vigencia){
+        $cod_concepto='';
+        $acta = $this->consultarActaInicio($cod_contrato,$vigencia);
+        if($acta[0]['aci_cno_codigo']){
+            $cod_concepto=$acta[0]['aci_cno_codigo'];
+        }
+        return $cod_concepto;
+    }
+    
+    function consultarActaInicio($cod_contrato,$vigencia_contrato){
+        $datos = array('vigencia_contrato'=>$vigencia_contrato,
+                            'cod_contrato'=>$cod_contrato);
+        $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"acta_inicio",$datos);
+        //echo "<br>cadena ".$cadena_sql ;
+        return $datos_contrato = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
+	
+    }
+    
+    
+      /**
+     * Funcion para consultar los aspectos del contratista relacionados a regimen, si es declarante, pensionado o pasante
+     * @param String $tipo_id
+     * @param int $identificacion
+     * @return <array> 
+     */
+    function consultarAspectoContratista($tipo_id,$identificacion){
+        $datos = array('tipo_id'=>$tipo_id,
+                            'identificacion'=>$identificacion);
+        $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"aspectos_contratista",$datos);
+        //echo "<br>cadena ".$cadena_sql ;
+        return $datos_contrato = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
+	
+    }
+    
+    
+    function validaAspectos($aspectos){
+        
+        $aspectos[0]['con_declarante']=(isset( $aspectos[0]['con_declarante'])? $aspectos[0]['con_declarante']:'');
+        $aspectos[0]['con_regimen_comun']=(isset( $aspectos[0]['con_regimen_comun'])? $aspectos[0]['con_regimen_comun']:'');
+        $aspectos[0]['con_pensionado']=(isset( $aspectos[0]['con_pensionado'])? $aspectos[0]['con_pensionado']:'');
+        $aspectos[0]['con_pasante']=(isset( $aspectos[0]['con_pasante'])? $aspectos[0]['con_pasante']:'');
+        $indice=0;
+        if(!$aspectos[0]['con_declarante']){
+            $valido[$indice]="Si es o no Declarante";
+            $indice++;
+        }
+        if(!$aspectos[0]['con_regimen_comun']){
+            $valido[$indice]="Si es o no Régimen Común";
+            $indice++;
+        }
+        
+        if(!$aspectos[0]['con_pensionado']){
+            $valido[$indice]="Si es o no Pensionado";
+            $indice++;
+        }
+       
+        if(!$aspectos[0]['con_pasante']){
+            $valido[$indice]="Si es o no Pasante";
+            $indice++;
+        }
+       
+        
+        $valido=(isset($valido)?$valido:'ok');
+        return $valido;
+    }
+    
     
 } // fin de la clase
 	

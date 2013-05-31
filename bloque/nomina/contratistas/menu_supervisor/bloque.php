@@ -46,6 +46,18 @@ $cripto=new encriptar();
 							
 						</td>
 					</tr>
+                                        
+                                        <tr class="bloquelateralcuerpo">
+						<td class="cuadro_simple">
+						<a href="<?		
+							$variable="pagina=nom_adminCumplidoSupervisor";
+                                                        $variable.="&opcion=consultarCumplidos";
+							$variable=$cripto->codificar_url($variable,$configuracion);
+							echo $indice.$variable;		
+							?>">  Consulta Cumplidos</a>
+							
+						</td>
+					</tr>
                                         <tr class="bloquelateralcuerpo">
 						<td class="cuadro_simple">
 						<a href="<?		
@@ -57,14 +69,14 @@ $cripto=new encriptar();
 							
 						</td>
 					</tr>
-<!--                                        <tr class="bloquelateralcuerpo">
+                                        <tr class="bloquelateralcuerpo">
 						<td class="cuadro_simple">
-						<a href="<? /*		
+						<a href="<?		
 							$variable="pagina=nom_adminSolicitudPagoSupervisor";
                                                         $variable.="&opcion=consultarSolicitudPago";
 							$variable=$cripto->codificar_url($variable,$configuracion);
 							echo $indice.$variable;		
-							?>">  Consultar Solicitud(es)</a>
+							?>">  Consultar Solicitud(es) Pago</a>
 							
 						</td>
 					</tr>
@@ -75,11 +87,11 @@ $cripto=new encriptar();
                                                         $variable.="&opcion=revisarCumplidosAprobados";
 							$variable=$cripto->codificar_url($variable,$configuracion);
 							echo $indice.$variable;		
-							*/?>">  Solicitar Pago</a>
+							?>">  Solicitar Pago</a>
 							
 						</td>
 					</tr>
--->										                                      
+									                                      
 				</table>
 			</td>
 		</tr>

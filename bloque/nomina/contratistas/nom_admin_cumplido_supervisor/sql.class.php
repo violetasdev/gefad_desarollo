@@ -64,9 +64,9 @@ class sql_adminCumplidoSupervisor extends sql
 				$cadena_sql=" SELECT CDP.NUMERO_DISPONIBILIDAD,";
                                 $cadena_sql.=" CDP.FECHA_DISPONIBILIDAD,";
                                 $cadena_sql.=" CDP.VALOR,";
-                                $cadena_sql.=" CDPRUBRO.INTERNO_RUBRO";
+                                $cadena_sql.=" CDPRUBRO.RUBRO_INTERNO";
                                 $cadena_sql.=" FROM CO.CO_MINUTA_CDP CDP";
-                                $cadena_sql.=" INNER JOIN CO.CO_SOL_CDP_RUBRO CDPRUBRO ON CDP.VIGENCIA=CDPRUBRO.VIGENCIA AND CDPRUBRO.NUMERO_CDP=CDP.NUMERO_DISPONIBILIDAD AND TRIM(CDPRUBRO.ESTADO_CDP)='APROBADO'";
+                                $cadena_sql.=" INNER JOIN PR.PR_DISPONIBILIDAD_RUBRO CDPRUBRO ON CDP.VIGENCIA=CDPRUBRO.VIGENCIA AND CDP.CODIGO_UNIDAD_EJECUTORA=CDPRUBRO.CODIGO_UNIDAD_EJECUTORA AND CDPRUBRO.NUMERO_DISPONIBILIDAD=CDP.NUMERO_DISPONIBILIDAD ";
                                 $cadena_sql.=" WHERE CDP.INTERNO_MC= ".$variable['cod_minuta_contrato'];
                                 $cadena_sql.=" AND CDP.VIGENCIA=".$variable['vigencia'];
                                 $cadena_sql.=" AND CDP.CODIGO_UNIDAD_EJECUTORA=".$variable['cod_unidad_ejecutora'];
@@ -110,8 +110,8 @@ class sql_adminCumplidoSupervisor extends sql
                                 $cadena_sql.=" DET_OP.VALOR AS VALOR_OP, ";
                                 $cadena_sql.=" DECODE(SUBSTR(OP.ESTADO,9,1),'1','ANULADO',SUBSTR(OP.ESTADO,4,1),'1','VIGENTE') AS ESTADO,";
                                 $cadena_sql.=" TO_DATE(EGR.FECHA_REGISTRO,'DD-MM-YY') AS FECHA_PAGO";
-                                $cadena_sql.=" FROM OGT_V_PREDIS_DETALLE DET_OP";
-                                $cadena_sql.=" INNER JOIN PR_COMPROMISOS COMP ";
+                                $cadena_sql.=" FROM OGT.OGT_V_PREDIS_DETALLE DET_OP";
+                                $cadena_sql.=" INNER JOIN PR.PR_COMPROMISOS COMP ";
                                 $cadena_sql.=" ON DET_OP.VIGENCIA = COMP.VIGENCIA ";
                                 $cadena_sql.=" AND DET_OP.CODIGO_COMPANIA = COMP.CODIGO_COMPANIA ";
                                 $cadena_sql.=" AND DET_OP.CODIGO_UNIDAD_EJECUTORA = COMP.CODIGO_UNIDAD_EJECUTORA ";
@@ -352,13 +352,15 @@ class sql_adminCumplidoSupervisor extends sql
                                 $cadena_sql.=" dtn_pension              AS pension,";  
                                 $cadena_sql.=" dtn_arp                  AS arp,";  
                                 $cadena_sql.=" dtn_afc                  AS afc,";  
-                                $cadena_sql.=" dtn_num_dias_pagados     AS dias_cumplido";  
+                                $cadena_sql.=" dtn_cooperativas_depositos   AS cooperativas_depositos,";  
+                                $cadena_sql.=" dtn_num_dias_pagados     AS dias_cumplido,";  
+                                $cadena_sql.=" dtn_saldo_antes_pago     AS saldo_antes_pago";  
                                 $cadena_sql.=" FROM fn_nom_cumplido";
                                 $cadena_sql.=" INNER JOIN fn_nom_datos_contrato  ON cto_vigencia=cum_cto_vigencia AND cto_num=cum_cto_num";
                                 $cadena_sql.=" INNER JOIN fn_nom_datos_contratista  ON cto_con_tipo_id=con_tipo_id AND cto_con_num_id=con_num_id";
                                 $cadena_sql.=" INNER JOIN fn_nom_tmp_dtlle_nomina  ON dtn_cum_id=cum_id AND dtn_cum_cto_vigencia=cum_cto_vigencia";
                                 $cadena_sql.=" WHERE cum_estado_reg='A'";
-                                $cadena_sql.=" AND cum_estado!='APROBADO'";
+                                $cadena_sql.=" AND cum_estado='SOLICITADO'";
                                 if($variable){
                                     $cadena_sql.=" AND cto_interno_co in (".$variable.")";
                                 }

@@ -262,26 +262,10 @@ class pagina
 					$this->html_pagina.="<script src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/funciones.js' type='text/javascript' language='javascript'></script>\n";
 					$this->html_pagina.="<script src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/navegador.js' type='text/javascript' language='javascript'></script>\n";
 					$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/textarea.js"."'></script>\n";
-                                        //$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["plugins"]."/jquery/js/jquery-1.9.1.js'></script>\n";
-                                        //$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["plugins"]."/jquery/js/jquery-1.9.1.min.js'></script>\n";
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/jquery.js"."'></script>\n";
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/overlib/overlibmws.js"."'></script>\n";
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/overlib/overlibmws_filter.js"."'></script>\n";					
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/overlib/overlibmws_print.js"."'></script>\n";
-					//this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/overlib/overlibmws_shadow.js"."'></script>\n";	
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/simple.js"."'></script>\n";					
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/prototype.js"."'></script>\n";
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/scriptaculous.js"."'></script>\n";
-
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/effects.js"."'></script>\n";
-
-					///CALENDARIO
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/calendar.js"."'></script>\n";
-//					$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/calendar-es.js"."'></script>\n";
-					//$this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/calendar-setup.js"."'></script>\n";
-//					$this->html_pagina.="<link rel='stylesheet' type='text/css' href='".$configuracion["host"].$configuracion["site"].$configuracion["estilo"]."/calendar-grey.css' />\n";					
+                                        $this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["plugins"]."/jquery/js/jquery-1.9.1.js'></script>\n";
+                                        $this->html_pagina.="<script type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["plugins"]."/jquery/js/jquery-1.9.1.min.js'></script>\n";
 					
-					$this->html_pagina.="<!--[if lt IE 7.]>\n";
+                                        $this->html_pagina.="<!--[if lt IE 7.]>\n";
 					$this->html_pagina.="<script defer type='text/javascript' src='".$configuracion["host"].$configuracion["site"].$configuracion["javascript"]."/pngfix.js'></script>\n";
 					$this->html_pagina.="<![endif]-->";
 					

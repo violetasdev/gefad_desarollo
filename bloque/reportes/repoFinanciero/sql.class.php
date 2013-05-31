@@ -32,13 +32,13 @@ class sql_reporteFinanciero extends sql
                                 $cadena_sql.=" p_rep.consulta sql_par , ";
                                 $cadena_sql.=" p_rep.carga_parametro alimenta_par, ";
                                 $cadena_sql.=" p_rep.control_parametro control_busqueda, ";
-                                $cadena_sql.=" p_rep.tipo_caja caja_html ";
-                                $cadena_sql.=" FROM gestion_reportes rep";
-                                $cadena_sql.=" LEFT OUTER JOIN gestion_parametros_reporte p_rep";
+                                $cadena_sql.=" p_rep.tipo_caja caja_html, ";
+                                $cadena_sql.=" p_rep.envia_parametro envia_par ";
+                                $cadena_sql.=" FROM ".$configuracion['prefijo']."reportes rep";
+                                $cadena_sql.=" LEFT OUTER JOIN ".$configuracion['prefijo']."parametros_reporte p_rep";
                                 $cadena_sql.=" ON p_rep.id_reporte=rep.id_reporte AND p_rep.estado='1'";
                                 $cadena_sql.=" WHERE rep.nombre='".$variable['nombre']."'";
                                 $cadena_sql.=" ORDER BY p_rep.id_parametro ";
-				
 				break;                            
                             
 			case "buscarReporte":
@@ -53,7 +53,7 @@ class sql_reporteFinanciero extends sql
                                 $cadena_sql.=" consulta rep_sql,";
                                 $cadena_sql.=" parametros rep_parametros,";
                                 $cadena_sql.=" estado rep_est";
-                                $cadena_sql.=" FROM gestion_reportes ";
+                                $cadena_sql.=" FROM ".$configuracion['prefijo']."reportes ";
                                 $cadena_sql.=" WHERE nombre='".$variable['nombre']."'";
 				
 				break;

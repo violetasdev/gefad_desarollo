@@ -96,7 +96,7 @@ class funciones_adminNominaOrdenador extends funcionGeneral
 		{
 			case "multiplesNominas":
                                 //$datos_documento = $this->consultarDocumento(1);
-            			$this->htmlNomina->multiplesNominas($configuracion,$registro);
+            			$this->htmlNomina->multiplesNominas($configuracion,$registro,  $this->sql,  $this->acceso_sic);
 				break;
 		
 		}
@@ -117,49 +117,11 @@ ________________________________________________________________________________
          */
         function consultar(){
             
-            //$cod_ordenador=$this->obtenerCodigoInternoOrdenador($this->identificacion);
-            //echo "<br>cod_sup ".$cod_ordenador;exit;
-            $cod_ordenador=3;
-            $id_ordenador=79297396;
+            $id_ordenador=$this->identificacion;
             $nominas = $this->consultarNomina($id_ordenador,'');
-            //var_dump($nominas);exit;
             $this->mostrarListadoNomina($nominas);
             
         }
-       
-         
-       /**
-        * Funcion para obtener el codigo de un ordenador a partir del numero de identificacion del usuario
-        * @param int $identificacion
-        * @return int 
-        */
-       function obtenerCodigoInternoOrdenador($identificacion){
-           $codigo_ordenador=0;
-           $resultado = $this->consultarDependenciaUsuario($identificacion);
-           if($resultado){
-               $dependencia=$resultado[0]['id_dependencia'];
-               $codigo_ordenador=$this->consultarCodigoInternoOrdenador($dependencia);
-               
-           }
-           return $codigo_ordenador;
-       }
-       
-        
-       /**
-        * Funcion para consultar el codigo interno del ordenador de una dependencia
-        * @param int $dependencia
-        * @return int
-        */
-       function consultarCodigoInternoOrdenador($dependencia){
-           $codigo_supervisor=0;
-           $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"codigo_supervisor",$dependencia);
-           //echo "<br>cadena ".$cadena_sql;exit;
-           $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
-           if($resultado){
-               $codigo_supervisor=$resultado[0]['COD_JEFE'];
-           }
-           return $codigo_supervisor;
-       }
        
     
     
@@ -173,7 +135,7 @@ ________________________________________________________________________________
             $datos=array(   'id_ordenador'=>$id_ordenador,
                             'id_supervisor'=>$id_supervisor);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"nomina",$datos);
-            echo "<br>cadena ".$cadena_sql;
+            //echo "<br>cadena ".$cadena_sql;
             $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
             return $resultado;
         
@@ -190,7 +152,7 @@ ________________________________________________________________________________
                $this->mostrarRegistro($this->configuracion,$registro, $this->configuracion['registro'], "multiplesNominas", "");
 
         }else{
-            echo "No tiene solicitudes de cumplido registradas";
+            echo "No tiene registros de nomina ";
         }
         
          
@@ -220,8 +182,25 @@ ________________________________________________________________________________
                     $datos_disponibilidad = $this->consultarDatosDisponibilidad($cod_interno_minuta_contrato, $cto_uni_ejecutora, $cum_cto_vigencia);
                     $num_cdp = $datos_disponibilidad[0]['NUMERO_DISPONIBILIDAD'];
                     $datos_registro = $this->consultarDatosRegistroPresupuestal($num_cdp, $cto_uni_ejecutora, $cum_cto_vigencia);
+                    //busca datos rubro
+                    $rubro=array('interno'=>$detalle['nom_rubro_interno'],'vigencia'=>$detalle['nom_anio'] );
+                    $rubro_sql = $this->sql->cadena_sql($this->configuracion,"","datos_rubro",$rubro);
+                    $resultadoRB = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $rubro_sql, "busqueda");
+                    //busca datos del supervisor
+                    $dependenciaSup_sql = $this->sql->cadena_sql($this->configuracion,"","nombre_dependencia",$detalle['nom_cod_dep_supervisor']);
+                    $resultadoDEP_SUP = $this->ejecutarSQL($this->configuracion, $this->acceso_sic,$dependenciaSup_sql, "busqueda");
+                    //busca datos del ordenador del gasto
+                    $ordenador_sql = $this->sql->cadena_sql($this->configuracion,"","datos_ordenador",$detalle['nom_num_id_ordenador']);
+                    $resultadoORD = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $ordenador_sql, "busqueda");
+                    $dependenciaOrd_sql = $this->sql->cadena_sql($this->configuracion,"","nombre_dependencia",$detalle['nom_cod_dep_ordenador']);
+                    $resultadoDEP_ORD = $this->ejecutarSQL($this->configuracion, $this->acceso_sic,$dependenciaOrd_sql, "busqueda");
+
                     
                     //Armamos el arreglo con la informacion del reporte
+                    $registro[$key]['Rubro'] = $resultadoRB[0]['COD_RUBRO'].' - '.$resultadoRB[0]['NOM_RUBRO'];
+                    $registro[$key]['Ordenador_del_gasto'] = $resultadoDEP_ORD[0]['NOMBRE_DEPENDENCIA'];
+                    $registro[$key]['Nombre_ordenador'] = $resultadoORD[0]['NOMBRES_JEFE']." ".$resultadoORD[0]['PRIMER_APELLIDO']." ".$resultadoORD[0]['SEGUNDO_APELLIDO'];
+                    $registro[$key]['Dependencia'] = $resultadoDEP_SUP[0]['NOMBRE_DEPENDENCIA'];
                     $registro[$key]['no_c.c_o_nit'] = $num_id_contratista;
                     $registro[$key]['primer_apellido'] = $datos_contratista[0]['PRIMER_APELLIDO'];
                     $registro[$key]['segundo_apellido'] = $datos_contratista[0]['SEGUNDO_APELLIDO'];
@@ -272,10 +251,7 @@ ________________________________________________________________________________
                 }
                
             }
-            //var_dump($registro);exit;
-            $this->htmlNomina->mostrarReportes($this->configuracion, $registro, "Reporte de Nomina", "Reporte Detalle de nómina");
-            
-            
+            $this->htmlNomina->mostrarNominaImpresa($this->configuracion, $registro, "Reporte de Nomina", "Liquidación OPS/CPS con carga a presupuesto");
         }
         
     
@@ -359,12 +335,13 @@ ________________________________________________________________________________
      * Funcion que muestra las solicitudes, para revisarlas y aprobarlas
      */
     function revisarSolicitudPagoNomina(){
-        include_once($this->configuracion["raiz_documento"] . $this->configuracion["bloques"]."/nomina/contratistas/nom_admin_cumplido_supervisor". $this->configuracion["clases"] . "/liquidacionNomina.class.php");
+        include_once($this->configuracion["raiz_documento"] . $this->configuracion["bloques"]."/nomina/contratistas/nom_admin_nomina_ordenador". $this->configuracion["clases"] . "/liquidacionNomina.class.php");
         $this->Liquidacion = new liquidacionNomina($this->configuracion);
         
-            $cod_ordenador=3;
-            $id_ordenador=79297396;
-            $solicitudes = $this->consultarSolicitudesNomina($id_ordenador,'');
+        $id_ordenador=  $this->identificacion;
+        $datos_ordenador = $this->consultarDatosOrdenador($id_ordenador);        
+        $solicitudes = $this->consultarSolicitudesNomina($id_ordenador,'');
+        //var_dump($solicitudes);exit;
             if(is_array($solicitudes)){
                 foreach ($solicitudes as $key => $solicitud) {
                     $parametro[0]['nombre_parametro']='valor_mes';
@@ -375,27 +352,58 @@ ________________________________________________________________________________
                     $parametro[2]['valor_parametro']=$solicitud['pension'];
                     $parametro[3]['nombre_parametro']='liq_arp';
                     $parametro[3]['valor_parametro']=$solicitud['arp'];
+                    $parametro[4]['nombre_parametro']='liq_afc';
+                    $parametro[4]['valor_parametro']=$solicitud['afc'];
 
-                    //$solicitudes[$key]['retefuente'] = $this->asignarValorRetefuente($solicitud);
+                    //exit;
+                    $cod_dependencia = $solicitud['cod_dependencia'];
+                    $solicitudes[$key]['nombre_dependencia'] = $this->consultarNombreDependencia($cod_dependencia);
+                    //Liquidacion de estampillas
+                    $solicitudes[$key]['base_retefuente'] = $this->Liquidacion->obtenerValorLiquidacion(7,'bas_retefuente',$parametro);
+                    $solicitudes[$key]['base_ica_estampillas'] = $this->Liquidacion->obtenerValorLiquidacion(10,'bas_ica_estampillas',$parametro);
                     $solicitudes[$key]['estampilla_ud'] = $this->Liquidacion->obtenerValorLiquidacion(4,'liq_estampilla_ud',$parametro);
                     $solicitudes[$key]['estampilla_procultura'] = $this->Liquidacion->obtenerValorLiquidacion(5,'liq_estampilla_procultura',$parametro);
                     $solicitudes[$key]['estampilla_proadultomayor'] = $this->Liquidacion->obtenerValorLiquidacion(6,'liq_estampilla_proadultomayor',$parametro);
-                    $solicitudes[$key]['regimen']='SIMPLIFICADO';
-                    if($solicitudes[$key]['regimen']=='COMUN'){
+                    $parametro[5]['nombre_parametro']='bas_retefuente';
+                    $parametro[5]['valor_parametro']=$solicitudes[$key]['base_retefuente'];
+           
+         
+                    // Liquidacion de retencion en la fuente
+                    $solicitudes[$key]['retefuente_099'] = $this->Liquidacion->asignarValorRetefuente($parametro);
+                    
+                    $solicitudes[$key]['declara_renta']=$solicitud['declarante'];
+                    if($solicitudes[$key]['declara_renta']=='SI'){
+                            $parametro[6]['nombre_parametro']='bas_retefuente_iman';
+                            $parametro[6]['valor_parametro']=$solicitudes[$key]['base_retefuente'];
+                            $solicitudes[$key]['retefuente_iman'] = $this->Liquidacion->asignarValorRetefuenteIman($parametro);
+                            //validamos el valor mayor para aplicar de retefuente
+                            if($solicitudes[$key]['retefuente_099']>$solicitudes[$key]['retefuente_iman']){
+                                $solicitudes[$key]['retefuente']=$solicitudes[$key]['retefuente_099'];
+                            }else{
+                                $solicitudes[$key]['retefuente']=$solicitudes[$key]['retefuente_iman'];
+                            }
+                    }else{
+                        $solicitudes[$key]['retefuente']=$solicitudes[$key]['retefuente_099'];
+                    }
+                    
+                    //Liquidacion del iva y reteiva
+                    $solicitudes[$key]['regimen_comun']=$solicitud['regimen_comun'];
+                    if($solicitudes[$key]['regimen_comun']=='SI'){
                         $solicitudes[$key]['iva'] = $this->Liquidacion->obtenerValorLiquidacion(8,'liq_iva',$parametro);
-                        $parametro[4]['nombre_parametro']='liq_iva';
-                        $parametro[4]['valor_parametro']= $solicitudes[$key]['iva'];
+                        $parametro[7]['nombre_parametro']='liq_iva';
+                        $parametro[7]['valor_parametro']= $solicitudes[$key]['iva'];
                         $solicitudes[$key]['reteiva'] = $this->Liquidacion->obtenerValorLiquidacion(9,'liq_reteiva',$parametro);
                     }else{
                         $solicitudes[$key]['iva'] = 0;
                         $solicitudes[$key]['reteiva'] = 0;
                     }
+                     
                     $solicitudes[$key]['ica'] = $this->Liquidacion->obtenerValorLiquidacion(10,'liq_ica',$parametro);
-                    
-                }   
+                 
                    
+                }   //var_dump($solicitudes); 
+                   //exit;
             }
-            //var_dump($solicitudes);exit;
 
             $this->htmlNomina->form_revisar_solicitud($this->configuracion, $solicitudes);
         }
@@ -411,53 +419,32 @@ ________________________________________________________________________________
         $datos=array(   'id_ordenador'=>$id_ordenador,
                         'id_supervisor'=>$id_supervisor);
         $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"solicitudes_nomina",$datos);
-        echo "<br>cadena ".$cadena_sql;
+        //echo "<br>cadena ".$cadena_sql;exit;
         return $resultado= $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
 	
     }
   
-    /**
-     * Funcion para asignar el valor de retefuente
-     * @param type $solicitud
-     * @return string 
-     */
-    function asignarValorRetefuente($solicitud){
-        var_dump($solicitud );exit;
-        if(is_array($solicitud)){
-                $vigencia=$solicitud['vigencia'];
-                $num_contrato=$solicitud['num_contrato'];
-                $fecha_inicial_cum=$solicitud['finicio_cumplido'];
-                $fecha_final_cum=$solicitud['ffinal_cumplido'];
-                $afc = $this->consultarNovedadAFCContrato($vigencia,$num_contrato,$fecha_inicial_cum,$fecha_final_cum);
-                if(is_array($afc)){
-                    $solicitudes[$key]['valor_afc']=$afc[0]['nov_valor'];
-                    $solicitudes[$key]['nov_id']=$afc[0]['nov_id'];
-                }else{
-                    $solicitudes[$key]['valor_afc']=0;
-                }
-                                  
-        }else{
-            $solicitudes='';
-        }
-        //var_dump($solicitudes);exit;
-        return $solicitudes;
-    }
+    
     
     
      /**
      * revisa las solicitudes seleccionadas para aprobar y realizar el correspondiente registro en la base de datos
      */
     function revisarAprobacionPagoNomina(){
-        //var_dump($_REQUEST);exit;
+       // var_dump($_REQUEST);exit;
         $aprobados=0;
         $total=(isset($_REQUEST['total_registros'])?$_REQUEST['total_registros']:0);
         if($total){
                 for($i=0;$i<$total;$i++){
                     $modificado=0;
                     $nombre = "id_solicitud_".$i;
+                    $nombre_valor_base_retefuente = "valor_base_retefuente_".$i;
                     $nombre_valor_retefuente = "valor_retefuente_".$i;
+                    $nombre_valor_retefuente_099 = "valor_retefuente_099_".$i;
+                    $nombre_valor_retefuente_iman = "valor_retefuente_iman_".$i;
                     $nombre_valor_iva = "valor_iva_".$i;
                     $nombre_valor_reteiva = "valor_reteiva_".$i;
+                    $nombre_valor_base_ica_estampillas = "valor_base_ica_estampillas_".$i;
                     $nombre_valor_ica= "valor_ica_".$i;
                     $nombre_valor_estampilla_ud = "valor_estampilla_ud_".$i;
                     $nombre_valor_estampilla_procultura = "valor_estampilla_procultura_".$i;
@@ -466,9 +453,21 @@ ________________________________________________________________________________
                     $_REQUEST[$nombre]=(isset($_REQUEST[$nombre])?$_REQUEST[$nombre]:'');
                         
                     if($_REQUEST[$nombre]){
-                            $modificado = $this->aprobarSolicitud($_REQUEST[$nombre],$_REQUEST[$nombre_valor_retefuente],$_REQUEST[$nombre_valor_iva],$_REQUEST[$nombre_valor_reteiva],$_REQUEST[$nombre_valor_ica], $_REQUEST[$nombre_valor_estampilla_ud], $_REQUEST[$nombre_valor_estampilla_procultura], $_REQUEST[$nombre_valor_estampilla_proadultomayor]);
+                            $modificado = $this->aprobarSolicitud($_REQUEST[$nombre],$_REQUEST[$nombre_valor_retefuente],$_REQUEST[$nombre_valor_iva],$_REQUEST[$nombre_valor_reteiva],$_REQUEST[$nombre_valor_ica], $_REQUEST[$nombre_valor_estampilla_ud], $_REQUEST[$nombre_valor_estampilla_procultura], $_REQUEST[$nombre_valor_estampilla_proadultomayor],$_REQUEST[$nombre_valor_base_retefuente],$_REQUEST[$nombre_valor_base_ica_estampillas],$_REQUEST[$nombre_valor_retefuente_099],$_REQUEST[$nombre_valor_retefuente_iman]);
                             if($modificado>0){
                                     $aprobados++;
+                                    $id = $_REQUEST[$nombre];
+                                    $vigencia = $_REQUEST[$nombre_vigencia];
+                                    //VARIABLES PARA EL LOG
+                                    $registro[0] = "APROBAR";
+                                    $registro[1] = $id;
+                                    $registro[2] = "DETALLE_SOLICITUD_PAGO_SUPERVISOR";
+                                    $registro[3] = $id;
+                                    $registro[4] = time();
+                                    $registro[5] = "Aprobar detalle de solicitud de pago ". $id;
+                                    $registro[5] .= " - vigencia =". $vigencia;
+                                    $this->log_us->log_usuario($registro,$this->configuracion);
+
                             }
                     }
                      //exit;
@@ -500,9 +499,8 @@ ________________________________________________________________________________
      * @param double $nombre_valor_estampilla_proadultomayor
      * @return int 
      */
-    function aprobarSolicitud($id_solicitud,$nombre_valor_retefuente,$nombre_valor_iva,$nombre_valor_reteiva,$nombre_valor_ica,$nombre_valor_estampilla_ud,$nombre_valor_estampilla_procultura,$nombre_valor_estampilla_proadultomayor){
-        
-            $aprobado=$this->actualizarSolicitudPago($id_solicitud,$nombre_valor_retefuente,$nombre_valor_iva,$nombre_valor_reteiva,$nombre_valor_ica,$nombre_valor_estampilla_ud,$nombre_valor_estampilla_procultura,$nombre_valor_estampilla_proadultomayor);
+    function aprobarSolicitud($id_solicitud,$nombre_valor_retefuente,$nombre_valor_iva,$nombre_valor_reteiva,$nombre_valor_ica,$nombre_valor_estampilla_ud,$nombre_valor_estampilla_procultura,$nombre_valor_estampilla_proadultomayor,$nombre_valor_base_retefuente,$nombre_valor_base_ica_estampillas,$nombre_valor_retefuente_099,$nombre_valor_retefuente_iman){
+           $aprobado=$this->actualizarSolicitudPago($id_solicitud,$nombre_valor_retefuente,$nombre_valor_iva,$nombre_valor_reteiva,$nombre_valor_ica,$nombre_valor_estampilla_ud,$nombre_valor_estampilla_procultura,$nombre_valor_estampilla_proadultomayor,$nombre_valor_base_retefuente,$nombre_valor_base_ica_estampillas,$nombre_valor_retefuente_099,$nombre_valor_retefuente_iman);
             return $aprobado;
     }
     
@@ -518,18 +516,21 @@ ________________________________________________________________________________
      * @param double $valor_estampilla_proadultomayor
      * @return int 
      */
-    function actualizarSolicitudPago($id_solicitud,$valor_retefuente,$valor_iva,$valor_reteiva,$valor_ica,$valor_estampilla_ud,$valor_estampilla_procultura,$valor_estampilla_proadultomayor){
+    function actualizarSolicitudPago($id_solicitud,$valor_retefuente,$valor_iva,$valor_reteiva,$valor_ica,$valor_estampilla_ud,$valor_estampilla_procultura,$valor_estampilla_proadultomayor,$valor_base_retefuente,$valor_base_ica_estampillas,$valor_retefuente_099,$valor_retefuente_iman){
             $datos=array('id'=>$id_solicitud,
+                            'valor_base_retefuente'=>$valor_base_retefuente,
                             'valor_retefuente'=>$valor_retefuente,
                             'valor_iva'=>$valor_iva,
                             'valor_reteiva'=>$valor_reteiva,
+                            'valor_base_ica_estampillas'=>$valor_base_ica_estampillas,
                             'valor_ica'=>$valor_ica,
                             'valor_estampilla_ud'=>$valor_estampilla_ud,
                             'valor_estampilla_procultura'=>$valor_estampilla_procultura,
                             'valor_estampilla_proadultomayor'=>$valor_estampilla_proadultomayor,
+                            'valor_retefuente_099'=>$valor_retefuente_099,
+                            'valor_retefuente_iman'=>$valor_retefuente_iman,
                             'estado'=>'APROBADO');
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"aprobar_solicitud_pago",$datos);
-             //echo "cadena ".$cadena_sql;exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_nomina);
     }
@@ -569,10 +570,10 @@ ________________________________________________________________________________
         include_once($this->configuracion["raiz_documento"] . $this->configuracion["bloques"]."/nomina/contratistas/nom_admin_cumplido_supervisor". $this->configuracion["clases"] . "/liquidacionNomina.class.php");
         $this->Liquidacion = new liquidacionNomina($this->configuracion);
         $registro='';
-            $cod_ordenador=3;
-            $id_ordenador=79297396;
+            $id_ordenador=  $this->identificacion;
             $solicitudes = $this->consultarSolicitudesAprobadasNomina($id_ordenador,'','');
             if(is_array($solicitudes)){
+                //var_dump($solicitudes);exit;
                 foreach ($solicitudes as $key => $solicitud) {
                     
                     $cto_interno_co = $solicitud['interno_co'];
@@ -586,9 +587,17 @@ ________________________________________________________________________________
                     $datos_disponibilidad = $this->consultarDatosDisponibilidad($cod_interno_minuta_contrato, $cto_uni_ejecutora, $cum_cto_vigencia);
                     $num_cdp = $datos_disponibilidad[0]['NUMERO_DISPONIBILIDAD'];
                     $datos_registro = $this->consultarDatosRegistroPresupuestal($num_cdp, $cto_uni_ejecutora, $cum_cto_vigencia);
-                    
+                    //var_dump($datos_disponibilidad);exit;
                     //Armamos el arreglo con la informacion 
+                    $cod_dependencia = $solicitud['cod_dependencia'];
+                    $registro[$key]['cod_dependencia'] = $cod_dependencia;
+                    $registro[$key]['nombre_dependencia'] = $this->consultarNombreDependencia($cod_dependencia);
+                    $registro[$key]['interno_rubro'] =  $solicitud['interno_rubro'];
+                    $registro[$key]['id_tipo_nomina'] =  $solicitud['id_tipo_nomina'];
+                    
                     $registro[$key]['detalle_id'] = $solicitud['detalle_id'];
+                    $registro[$key]['cumplido_id'] = $solicitud['cum_id'];
+                    $registro[$key]['num_solicitud_pago'] = $solicitud['num_solicitud_pago'];
                     $registro[$key]['identificacion'] = $num_id_contratista;
                     $registro[$key]['primer_apellido'] = $datos_contratista[0]['PRIMER_APELLIDO'];
                     $registro[$key]['segundo_apellido'] = $datos_contratista[0]['SEGUNDO_APELLIDO'];
@@ -615,6 +624,7 @@ ________________________________________________________________________________
                     $registro[$key]['fecha_inicio_periodo'] = $solicitud['fecha_inicio_per'];
                     $registro[$key]['fecha_final_periodo'] = $solicitud['fecha_final_per'];
                     $registro[$key]['dias_pagados'] = $solicitud['num_dias_pagados'];
+                    $registro[$key]['declarante'] = $solicitud['declarante'];
                     $registro[$key]['regimen_comun'] = $solicitud['regimen_comun'];
                     $registro[$key]['valor_liquidacion_antes_iva'] = $solicitud['valor_liq_antes_iva'];
                     $registro[$key]['valor_iva'] = $solicitud['valor_iva'];
@@ -661,7 +671,7 @@ ________________________________________________________________________________
                     $parametro[6]['nombre_parametro']='liq_estampilla_procultura';
                     $parametro[6]['valor_parametro']=$registro[$key]['valor_estampilla_procultura'];
                     $parametro[7]['nombre_parametro']='liq_estampilla_proadultomayor';
-                    $parametro[7]['valor_parametro']=$registro[$key]['valor_estampilla_pro-adultomayor'];
+                    $parametro[7]['valor_parametro']=$registro[$key]['valor_estampilla_proadultomayor'];
                     $parametro[8]['nombre_parametro']='liq_cooperativas';
                     $parametro[8]['valor_parametro']=$registro[$key]['valor_dcto_cooperativas_y_depositos_judiciales'];
                     $parametro[9]['nombre_parametro']='liq_arp';
@@ -695,83 +705,190 @@ ________________________________________________________________________________
                             'id_supervisor'=>$id_supervisor,
                             'id_detalle'=>$id_detalle);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"solicitudes_aprobadas_nomina",$datos);
-           // echo "<br>cadena ".$cadena_sql;exit;
+            //echo "<br>cadena ".$cadena_sql ;
             return $resultado= $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
 	
     }
   
     
+    /**
+     * Funcion para registrar la nomina con los detalles seleccionados 
+     */
     function generarNomina(){
-        //var_dump($_REQUEST);exit;
+        
+
         $aprobados=0;
+        $registro='';
+        $cantidad_nominas=0;
         $total=(isset($_REQUEST['total_registros'])?$_REQUEST['total_registros']:0);
-        if($total){
-                $id_nomina = $this->crearNomina();
+        if($total && $_REQUEST['periodo_pago']>0){
+                
+                $indice=0;
+                //capturamos datos de las solicitudes seleccionadas
                 for($i=0;$i<$total;$i++){
                     $modificado=0;
                     
-                    $nombre = "id_solicitud_".$i;
+                    $nombre = "id_detalle_".$i;
+                    $nombre_num_solicitud_pago = "num_solicitud_pago_".$i;
+                    $nombre_cumplido = "cumplido_id_".$i;
                     $nombre_total = "valor_total_".$i;
+                    $nombre_interno_rubro = "interno_rubro_".$i;
+                    $nombre_vigencia = "vigencia_".$i;
                     $nombre_neto_a_pagar_sin_aplicar_retenciones = "valor_neto_a_pagar_sin_aplicar_retenciones_".$i;
                     $nombre_neto_a_abonar_a_la_cuenta_bancaria = "valor_neto_a_abonar_a_la_cuenta_bancaria_".$i;
                     $nombre_neto_a_aplicar_en_sicapital= "valor_neto_a_aplicar_en_sicapital_".$i;
                     $nombre_total_descuento_sin_retenciones = "valor_total_descuento_sin_retenciones_".$i;
+                    $nombre_valor_saldo_corte_pago = "valor_saldo_corte_pago_".$i;
+                    $nombre_cod_dependencia = "cod_dependencia_".$i;
+                    $nombre_id_tipo_nomina = "id_tipo_nomina_".$i;
                     
                     $_REQUEST[$nombre]=(isset($_REQUEST[$nombre])?$_REQUEST[$nombre]:'');
-                        
+                    $_REQUEST[$nombre_interno_rubro]=(isset($_REQUEST[$nombre_interno_rubro])?$_REQUEST[$nombre_interno_rubro]:'');
+                    $_REQUEST[$nombre_vigencia]=(isset($_REQUEST[$nombre_vigencia])?$_REQUEST[$nombre_vigencia]:'');
+                    
                     if($_REQUEST[$nombre]){
-                            $modificado = $this->crearDetalleNomina($id_nomina,$_REQUEST[$nombre],$_REQUEST[$nombre_total],$_REQUEST[$nombre_neto_a_pagar_sin_aplicar_retenciones],$_REQUEST[$nombre_neto_a_abonar_a_la_cuenta_bancaria],$_REQUEST[$nombre_neto_a_aplicar_en_sicapital], $_REQUEST[$nombre_total_descuento_sin_retenciones]);
-                            if($modificado>0){
-                                    $eliminado = $this->eliminarTmpDetalleNomina($_REQUEST[$nombre]);
-                            
-                                    $aprobados++;
-                            }
+                        $existe = $this->existeDetalleNomina($_REQUEST[$nombre_cumplido],$_REQUEST[$nombre_vigencia],$_REQUEST[$nombre_num_solicitud_pago]);
+                        if(!$existe){
+                            $registro[$indice]['id_detalle']=$_REQUEST[$nombre];
+                            $registro[$indice]['num_solicitud_pago']=$_REQUEST[$nombre_num_solicitud_pago];
+                            $registro[$indice]['id_cumplido']=$_REQUEST[$nombre_cumplido];
+                            $registro[$indice]['vigencia_contrato']= $_REQUEST[$nombre_vigencia];
+                            $registro[$indice]['rubro_interno']=$_REQUEST[$nombre_interno_rubro];
+                            $registro[$indice]['neto_a_pagar_sin_aplicar_retenciones']=$_REQUEST[$nombre_neto_a_pagar_sin_aplicar_retenciones];
+                            $registro[$indice]['neto_a_abonar_a_la_cuenta_bancaria']=$_REQUEST[$nombre_neto_a_abonar_a_la_cuenta_bancaria];
+                            $registro[$indice]['neto_a_aplicar_en_sicapital']=$_REQUEST[$nombre_neto_a_aplicar_en_sicapital];
+                            $registro[$indice]['total_descuento_sin_retenciones']=$_REQUEST[$nombre_total_descuento_sin_retenciones];
+                            $registro[$indice]['valor_saldo_corte_pago']=$_REQUEST[$nombre_valor_saldo_corte_pago];
+                            $registro[$indice]['total']=$_REQUEST[$nombre_total];
+                            $registro[$indice]['cod_dependencia'] = $_REQUEST[$nombre_cod_dependencia];
+                            $registro[$indice]['id_tipo_nomina'] = $_REQUEST[$nombre_id_tipo_nomina];
+                            $indice++;
+                        }
                     }
                      
                 }
-//                if($aprobados>0){
-//                        $mensaje = $aprobados. " solicitudes aprobadas con exito";
-//                }else{
-//                        $mensaje = " No se aprobó ninguna solicitud";
-//                }
-//                $pagina=$this->configuracion["host"].$this->configuracion["site"]."/index.php?";
-//                $variable="pagina=nom_adminNomin634aOrdenador";
-//                $variable.="&opcion=revisarNomina";
-//                
-//                $variable=$this->cripto->codificar_url($variable,$this->configuracion);
-//                $this->retornar($pagina,$variable,$mensaje);
+                if ($registro){
+                    
+                        $rubros = $this->obtenerRubrosYSolicitudesNomina($registro);
+
+                        $datos_solicitudes = $this->asignarDetallesNomina($rubros,$registro);
+                        //var_dump($datos_solicitudes);exit;
+                        //recorremos los datos de las solicitudes para registrar en la BD las solicitudes y los correspondientes detalles
+                        foreach ($datos_solicitudes as $key => $datos_solicitud) {
+                            $id_nomina = $this->crearNomina($datos_solicitud);
+
+                            if($id_nomina){
+                                $cantidad_nominas++;
+                                $detalles=$datos_solicitud['detalles'];
+                                //VARIABLES PARA EL LOG
+                                $registro[0] = "GENERAR";
+                                $registro[1] = $id_nomina;
+                                $registro[2] = "NOMINA";
+                                $registro[3] = $id_nomina;
+                                $registro[4] = time();
+                                $registro[5] = "Insertar nomina ". $id_nomina;
+                                $registro[5] .= " - rubro =". $datos_solicitud['rubro_interno'];
+                                $registro[5] .= " - cod_dependencia =". $datos_solicitud['cod_dependencia'];
+                                $this->log_us->log_usuario($registro,$this->configuracion);
+
+
+                                foreach ($detalles as $key => $detalle) {
+                                    $id_detalle = $detalle['id_detalle'];
+                                    $id_cumplido = $detalle['id_cumplido'];
+                                    $vigencia = $detalle['vigencia_contrato'];
+                                    $total = $detalle['id_cumplido'];
+                                    $neto_a_pagar_sin_aplicar_retenciones = $detalle['neto_a_pagar_sin_aplicar_retenciones'];
+                                    $neto_a_abonar_a_la_cuenta_bancaria = $detalle['neto_a_abonar_a_la_cuenta_bancaria'];
+                                    $neto_a_aplicar_en_sicapital = $detalle['neto_a_aplicar_en_sicapital'];
+                                    $total_descuento_sin_retenciones = $detalle['total_descuento_sin_retenciones'];
+                                    $valor_saldo_corte_pago = $detalle['valor_saldo_corte_pago'];
+                                                         
+                                    $modificado = $this->crearDetalleNomina($id_nomina,$id_detalle,$id_cumplido,$total,$neto_a_pagar_sin_aplicar_retenciones,$neto_a_abonar_a_la_cuenta_bancaria,$neto_a_aplicar_en_sicapital, $total_descuento_sin_retenciones,$valor_saldo_corte_pago);
+                                    if($modificado>0){
+                                            //VARIABLES PARA EL LOG
+                                            $registro[0] = "INSERTAR";
+                                            $registro[1] = $id_detalle;
+                                            $registro[2] = "DETALLE_NOMINA";
+                                            $registro[3] = $id_detalle;
+                                            $registro[4] = time();
+                                            $registro[5] = "Insertar detalle nomina ". $id_detalle;
+                                            $registro[5] .= " - id_nomina =". $id_nomina;
+                                            $registro[5] .= " - id_cumplido =". $id_cumplido;
+                                            $this->log_us->log_usuario($registro,$this->configuracion);
+
+                                            $this->actualizarEstadoDetalleSolicitud($id_detalle,$vigencia,"PROCESADO");
+                                            $aprobados++;
+                                    }
+                                }
+                            }
+                        }
+
+
+                        if($cantidad_nominas>0){
+                                $mensaje = $cantidad_nominas." nominas generadas con ".$aprobados. " registros relacionados.";
+                        }else{
+                                $mensaje = " No se genero ninguna nomina";
+                        }
+                }else{
+                        $mensaje = "No hay ningun registro valido para insertar solicitud de pago ";
+                        
+                }
+                $pagina=$this->configuracion["host"].$this->configuracion["site"]."/index.php?";
+                $variable="pagina=nom_adminNominaOrdenador";
+                $variable.="&opcion=revisarNomina";
+
+                $variable=$this->cripto->codificar_url($variable,$this->configuracion);
+                $this->retornar($pagina,$variable,$mensaje);
+ 
+        }else{
+            $mensaje = "Selección no valida";
+            $pagina=$this->configuracion["host"].$this->configuracion["site"]."/index.php?";
+                $variable="pagina=nom_adminNominaOrdenador";
+                $variable.="&opcion=revisarNomina";
+                
+                $variable=$this->cripto->codificar_url($variable,$this->configuracion);
+                $this->retornar($pagina,$variable,$mensaje);
  
         }
     }
     
-    function crearNomina(){
-        //$numero = $this->obtenerNumeroNomina();
-        //var_dump($_REQUEST);exit;
-        $id_nomina=$this->obtenerNumeroNomina();
-        echo "<br>id_nomina ".$id_nomina;
-        
-        $rubro_interno=364;
-        $cod_dependencia=40;
-        $cod_ordenador=3;
-        $id_ordenador=79297396;
-        $anio =  substr($_REQUEST['periodo_pago'], 0,4);
-        $mes = substr($_REQUEST['periodo_pago'], 4,2);
-        echo "<br>anio ".$anio;
-        echo "<br>mes ".$mes;
-        $nomina = $this->insertarNomina($id_nomina,$rubro_interno,$cod_dependencia,$cod_ordenador,$id_ordenador, $anio,$mes);
-        if($nomina){
-            return $id_nomina;
-        }else{
-            return null;
+    /**
+     * Funcion para tomar los datos de una nueva nomina y llamar el metodo de insercion
+     * @param <array> $solicitud
+     * @return int/null 
+     */
+    function crearNomina($solicitud)
+        {   $id_nomina=$this->obtenerNumeroNomina();
+            $rubro_interno=$solicitud['rubro_interno'];
+            $cod_dependencia=$solicitud['cod_dependencia'];
+            $id_ordenador=  $this->identificacion;
+            $datos_ordenador = $this->consultarDatosOrdenador($id_ordenador);
+            $cod_ordenador=$datos_ordenador[0]['COD_JEFE'];
+            $cod_dependencia_ord=$datos_ordenador[0]['COD_DEPENDENCIA'];
+            $anio =  substr($_REQUEST['periodo_pago'], 0,4);
+            $mes = substr($_REQUEST['periodo_pago'], 4,2);
+            $nomina = $this->insertarNomina($id_nomina,$rubro_interno,$cod_dependencia,$cod_ordenador,$id_ordenador, $anio,$mes,$cod_dependencia_ord);
+            if($nomina){
+                return $id_nomina;
+            }else{
+                return null;
+            }
         }
-    }
    
+    /**
+     * Funcion para obtener el numero de la nueva nomina a partir del ultimo registrado
+     * @return type 
+     */
     function obtenerNumeroNomina(){
         $numero = $this->consultarUltimoNumeroNomina();
         $numero++;
         return $numero;
     }
     
+    /**
+     * Funcion para consultar el ultimo numero identificador de la nomina
+     * @return int 
+     */
     function consultarUltimoNumeroNomina(){
 
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"ultimo_numero_nomina","");
@@ -780,62 +897,94 @@ ________________________________________________________________________________
             return $datos[0][0];
     }
     
-    function insertarNomina($id_nomina,$rubro_interno,$cod_dependencia,$cod_ordenador,$id_ordenador, $anio,$mes){
+    /**
+     * Funcion para insertar un registro de nomina a la bd
+     * @param int $id_nomina
+     * @param int $rubro_interno
+     * @param int $cod_dependencia
+     * @param int $cod_ordenador
+     * @param int $id_ordenador
+     * @param int $anio
+     * @param int $mes
+     * @return int
+     */
+    function insertarNomina($id_nomina,$rubro_interno,$cod_dependencia,$cod_ordenador,$id_ordenador, $anio,$mes,$cod_dependencia_ord){
             $datos = array('id_nomina'=>$id_nomina,
-                                'rubro_interno'=>$rubro_interno,
-                                'cod_dependencia'=>$cod_dependencia,
-                                'cod_ordenador'=>$cod_ordenador,
-                                'id_ordenador'=>$id_ordenador,
-                                'anio'=>$anio,
-                                'mes'=>$mes,
-                                'fecha_registro'=>date('Y-m-d'),
-                                'estado_registro'=>'GENERADA',
-                                'estado'=>'A');
+                            'rubro_interno'=>$rubro_interno,
+                            'cod_dependencia'=>$cod_dependencia,
+                            'cod_ordenador'=>$cod_ordenador,
+                            'id_ordenador'=>$id_ordenador,
+                            'anio'=>$anio,
+                            'mes'=>$mes,
+                            'fecha_registro'=>date('Y-m-d'),
+                            'estado_registro'=>'GENERADA',
+                            'estado'=>'A',
+                            'cod_dependencia_ord'=>$cod_dependencia_ord);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"insertar_nomina",$datos);
              //echo "cadena ".$cadena_sql;//exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_nomina);
     }
    
-       function crearDetalleNomina($id_nomina,$id_detalle,$total,$neto_a_pagar_sin_aplicar_retenciones,$neto_a_abonar_a_la_cuenta_bancaria,$neto_a_aplicar_en_sicapital, $total_descuento_sin_retenciones){
-           $solicitud = $this->consultarSolicitudesAprobadasNomina('','',$id_detalle);
-           //var_dump($solicitud);exit;
-            $datos = array( 'id_detalle'=>$id_detalle,
-                            'id_nomina'=>$id_nomina,
-                            'id_cumplido'=>$solicitud[0]['cum_id'],
-                            'vigencia'=>$solicitud[0]['vigencia'],
-                            'porc_retefuente'=>$solicitud[0]['porc_retefuente'],
-                            'neto_abonar_cta_bancaria'=>$neto_a_abonar_a_la_cuenta_bancaria,
-                            'neto_aplicar_sic'=>$neto_a_aplicar_en_sicapital,
-                            'saldo_antes_pago'=>$solicitud[0]['saldo_antes_pago'],
-                            'fecha_inicio_per'=>$solicitud[0]['fecha_inicio_per'],
-                            'fecha_final_per'=>$solicitud[0]['fecha_final_per'],
-                            'num_dias_pagados'=>$solicitud[0]['num_dias_pagados'],
-                            'regimen_comun'=>$solicitud[0]['regimen_comun'],
-                            'valor_liq_antes_iva'=>$solicitud[0]['valor_liq_antes_iva'],
-                            'valor_iva'=>$solicitud[0]['valor_iva'],
-                            'valor_total'=>$total,
-                            'base_retefuente_renta'=>$solicitud[0]['base_retefuente_renta'],
-                            'valor_retefuente_renta'=>$solicitud[0]['valor_retefuente_renta'],
-                            'valor_reteiva'=>$solicitud[0]['valor_reteiva'],
-                            'base_ica_estampillas'=>$solicitud[0]['base_ica_estampillas'],
-                            'valor_ica'=>$solicitud[0]['valor_ica'],
-                            'estampilla_ud'=>$solicitud[0]['estampilla_ud'],  
-                            'estampilla_procultura'=>$solicitud[0]['estampilla_procultura'],
-                            'estampilla_proadultomayor'=>$solicitud[0]['estampilla_proadultomayor'],
-                            'arp'=>$solicitud[0]['arp'],
-                            'cooperativas_depositos'=>(isset($solicitud[0]['cooperativas_deposito'])?$solicitud[0]['cooperativas_deposito']:0),
-                            'afc'=>$solicitud[0]['afc'],
-                            'total_dctos_sin_retenciones'=>$total_descuento_sin_retenciones, 
-                            'neto_pagar_sin_retenciones'=>$neto_a_pagar_sin_aplicar_retenciones, 
-                            'saldo_contrato_al_corte'=>0,
-                            'salud'=>$solicitud[0]['salud'],
-                            'pension'=>$solicitud[0]['pension'],
-                            'pensionado'=>$solicitud[0]['pensionado'],
-                            'pago_saldo_menores'=>$solicitud[0]['pago_saldo_menores'],
-                            'pasante_monitoria'=>$solicitud[0]['pasante_monitoria'],
-                            'num_solicitud_pago'=>$solicitud[0]['num_solicitud_pago']);
-            $aprobado=$this->insertarDetalleNomina($datos);
+    /**
+     * Funcion para tomar los datos del detalle de nomina y llamar el metodo para la insercion
+     * @param int $id_nomina
+     * @param int $id_detalle
+     * @param int $id_cumplido
+     * @param double $total
+     * @param double $neto_a_pagar_sin_aplicar_retenciones
+     * @param double $neto_a_abonar_a_la_cuenta_bancaria
+     * @param double $neto_a_aplicar_en_sicapital
+     * @param double $total_descuento_sin_retenciones
+     * @param double $valor_saldo_corte_pago
+     * @return int 
+     */   
+    function crearDetalleNomina($id_nomina,$id_detalle,$id_cumplido,$total,$neto_a_pagar_sin_aplicar_retenciones,$neto_a_abonar_a_la_cuenta_bancaria,$neto_a_aplicar_en_sicapital, $total_descuento_sin_retenciones,$valor_saldo_corte_pago){
+            $aprobado=0;   
+            $solicitud = $this->consultarSolicitudesNominaxTmpDetalle($id_detalle);
+//            echo "<br>nomina ".$id_nomina;
+//            echo "<br>id_detalle ".$id_detalle;
+//            echo "<br>id_cumplido ".$id_cumplido;
+//           //var_dump($solicitud);exit;
+           if($solicitud){
+                $datos = array( 'id_detalle'=>$id_detalle,
+                                'id_nomina'=>$id_nomina,
+                                'id_cumplido'=>$id_cumplido,
+                                'vigencia'=>$solicitud[0]['vigencia'],
+                                'porc_retefuente'=>$solicitud[0]['porc_retefuente'],
+                                'neto_abonar_cta_bancaria'=>$neto_a_abonar_a_la_cuenta_bancaria,
+                                'neto_aplicar_sic'=>$neto_a_aplicar_en_sicapital,
+                                'saldo_antes_pago'=>$solicitud[0]['saldo_antes_pago'],
+                                'fecha_inicio_per'=>$solicitud[0]['fecha_inicio_per'],
+                                'fecha_final_per'=>$solicitud[0]['fecha_final_per'],
+                                'num_dias_pagados'=>$solicitud[0]['num_dias_pagados'],
+                                'declarante'=>$solicitud[0]['declarante'],
+                                'regimen_comun'=>$solicitud[0]['regimen_comun'],
+                                'valor_liq_antes_iva'=>$solicitud[0]['valor_liq_antes_iva'],
+                                'valor_iva'=>$solicitud[0]['valor_iva'],
+                                'valor_total'=>$total,
+                                'base_retefuente_renta'=>$solicitud[0]['base_retefuente_renta'],
+                                'valor_retefuente_renta'=>$solicitud[0]['valor_retefuente_renta'],
+                                'valor_reteiva'=>$solicitud[0]['valor_reteiva'],
+                                'base_ica_estampillas'=>$solicitud[0]['base_ica_estampillas'],
+                                'valor_ica'=>$solicitud[0]['valor_ica'],
+                                'estampilla_ud'=>$solicitud[0]['estampilla_ud'],  
+                                'estampilla_procultura'=>$solicitud[0]['estampilla_procultura'],
+                                'estampilla_proadultomayor'=>$solicitud[0]['estampilla_proadultomayor'],
+                                'arp'=>$solicitud[0]['arp'],
+                                'cooperativas_depositos'=>(isset($solicitud[0]['cooperativas_deposito'])?$solicitud[0]['cooperativas_deposito']:0),
+                                'afc'=>$solicitud[0]['afc'],
+                                'total_dctos_sin_retenciones'=>$total_descuento_sin_retenciones, 
+                                'neto_pagar_sin_retenciones'=>$neto_a_pagar_sin_aplicar_retenciones, 
+                                'saldo_contrato_al_corte'=>$valor_saldo_corte_pago,
+                                'salud'=>$solicitud[0]['salud'],
+                                'pension'=>$solicitud[0]['pension'],
+                                'pensionado'=>$solicitud[0]['pensionado'],
+                                'pago_saldo_menores'=>$solicitud[0]['pago_saldo_menores'],
+                                'pasante_monitoria'=>$solicitud[0]['pasante_monitoria'],
+                                'num_solicitud_pago'=>$solicitud[0]['num_solicitud_pago']);
+                $aprobado=$this->insertarDetalleNomina($datos);
+           }
             return $aprobado;
     }
   
@@ -852,13 +1001,16 @@ ________________________________________________________________________________
     function insertarDetalleNomina($datos_detalle){
             
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"insertar_detalle_nomina",$datos_detalle);
-             echo "cadena ".$cadena_sql;//exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_nomina);
     }
    
+    /**
+     * Funcion que retorna listado de periodo para nominas
+     * @return type 
+     */
     function periodosPago(){
-            $anio_inicial=2009;
+            $anio_inicial=2013;
             $anio_final=date('Y');
             $mes_inicial='01';
             $mes_final=date('m');
@@ -961,12 +1113,147 @@ ________________________________________________________________________________
             return $meses;
     }
     
-       function eliminarTmpDetalleNomina($id_detalle){
+     
+         /**
+        * Funcion para consultar los datos de un ordenador de gasto a partir de la cedula
+        * @param int $cod_ordenador
+        * @return int
+        */
+       function consultarDatosOrdenador($id_ordenador){
+           $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"datos_ordenador",$id_ordenador);
+           //echo "<br>cadena ".$cadena_sql;exit;
+           $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
+           return $resultado;
+       }
+     
+       /**
+        * Funcion para consultar el nombre de una dependencia a partir del codigo interno de SICAPITAL
+        * @param type $cod_dependencia
+        * @return type 
+        */
+       function consultarNombreDependencia($cod_dependencia){
+           $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"nombre_dependencia",$cod_dependencia);
+           //echo "<br>cadena ".$cadena_sql;exit;
+           $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
+           return $resultado[0][0];
            
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"eliminar_tmp_detalle_nomina",$id_detalle);
-             echo "cadena ".$cadena_sql;//exit;
+       }
+    
+  /**
+   * Funcion que devuelve arreglo con los diferentes rubros y numeros de solicitudes 
+   * @param <array> $registros
+   * @return <array> 
+   */
+       function obtenerRubrosYSolicitudesNomina($registros){
+      //var_dump($registros);exit;
+           $indice=0;
+        $rubro= array();
+        if($registros){
+                foreach ($registros as $key => $registro) {
+                    $existe = $this->buscarSolicitudEnArreglo($rubro,$registro['num_solicitud_pago'],$registro['id_tipo_nomina']);
+                    if($existe==0){
+                        $rubro[$indice]['rubro_interno']= $registro['rubro_interno'];
+                        $rubro[$indice]['id_tipo_nomina']= $registro['id_tipo_nomina'];
+                        $rubro[$indice]['num_solicitud_pago']= $registro['num_solicitud_pago'];
+                        $rubro[$indice]['cod_dependencia']= $registro['cod_dependencia'];
+                        $indice++;
+                    }
+                }
+        }
+        return $rubro;
+    }
+    
+    /**
+     * Funcion para buscar si existe un numero de solicitud dentro de un arreglo de solicitudes
+     * @param <array> $rubros
+     * @param int $numero_solicitud
+     * @return int 
+     */
+    function buscarSolicitudEnArreglo($rubros,$numero_solicitud,$id_tipo_nomina){
+        $existe =0;
+        foreach ($rubros as $rubro) {
+            if($rubro['num_solicitud_pago']==$numero_solicitud && $rubro['id_tipo_nomina']==$id_tipo_nomina){
+                $existe=1;
+            }
+        }
+        return $existe;
+    }
+    
+    /**
+     * Funcion para asignar los detalles de una solicitud
+     * @param type $datos_solicitudes
+     * @param type $registros
+     * @return type 
+     */
+    function asignarDetallesNomina($datos_solicitudes,$registros){
+        if($datos_solicitudes && $registros){
+            foreach ($datos_solicitudes as $key => $datos_solicitud) {
+                foreach ($registros as $registro) {
+                    if($datos_solicitud['rubro_interno']==$registro['rubro_interno'] && $datos_solicitud['num_solicitud_pago']==$registro['num_solicitud_pago']  && $datos_solicitud['id_tipo_nomina']==$registro['id_tipo_nomina']){
+                        $detalles = (isset($datos_solicitudes[$key]['detalles'])?$datos_solicitudes[$key]['detalles']:array());
+                        $cantidad = count($detalles);
+                        $detalles[$cantidad]['id_cumplido']=$registro['id_cumplido'];
+                        $detalles[$cantidad]['id_detalle']=$registro['id_detalle'];
+                        $detalles[$cantidad]['vigencia_contrato']=$registro['vigencia_contrato'];
+                        $detalles[$cantidad]['neto_a_pagar_sin_aplicar_retenciones']=$registro['neto_a_pagar_sin_aplicar_retenciones'];
+                        $detalles[$cantidad]['neto_a_abonar_a_la_cuenta_bancaria']=$registro['neto_a_abonar_a_la_cuenta_bancaria'];
+                        $detalles[$cantidad]['neto_a_aplicar_en_sicapital']=$registro['neto_a_aplicar_en_sicapital'];
+                        $detalles[$cantidad]['total_descuento_sin_retenciones']=$registro['total_descuento_sin_retenciones'];
+                        $detalles[$cantidad]['total']=$registro['total'];
+                        $detalles[$cantidad]['valor_saldo_corte_pago']=$registro['valor_saldo_corte_pago'];
+                        $datos_solicitudes[$key]['detalles']=$detalles;
+                    }
+                }
+            }
+        }
+        return $datos_solicitudes;
+    }
+    
+    /**
+     * Funcion para actualizar el estado del detalle de solicitud
+     * @param int $id_detalle
+     * @param int $vigencia
+     * @param string $estado
+     * @return int 
+     */
+    function actualizarEstadoDetalleSolicitud($id_detalle,$vigencia,$estado){
+            $datos=array('estado'=>$estado,  
+                        'id_detalle'=>$id_detalle,
+                        'vigencia'=>$vigencia
+                            );
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"actualizar_estado_detalle_solicitud",$datos);
+            //echo "<br>cadena ".$cadena_sql;
             $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_nomina);
+    }
+    
+    function existeDetalleNomina($id_cumplido,$vigencia_contrato,$id_solicitud){
+           $existe=0;
+           $solicitud = $this->consultarDetalleNominaxSolicitud($id_cumplido, $vigencia_contrato, $id_solicitud);
+           if($solicitud[0]['dtn_id']>0){
+               $existe=1;
+           }else{
+               $existe=0;
+           }
+           return $existe;
+       }
+       
+    function consultarDetalleNominaxSolicitud($id_cumplido, $vigencia_contrato, $id_solicitud){
+            $datos = array( 'id_cumplido'=>$id_cumplido,
+                            'vigencia_contrato'=>$vigencia_contrato,
+                            'id_solicitud'=>$id_solicitud
+                            );
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"detalle_nomina_xsolicitud",$datos);
+            $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
+            return $resultado;
+
+    }
+    
+     
+    function consultarSolicitudesNominaxTmpDetalle($id_detalle){
+         $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"solicitudes_nomina_xdetalle",$id_detalle);
+        return $resultado= $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
+	
     }
     
     

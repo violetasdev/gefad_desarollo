@@ -435,7 +435,7 @@ ________________________________________________________________________________
                             'unidad_ejec'=>$unidad_ejecutora,
                             'num_registro'=>$numero_registro);
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"tipo_contrato",$datos);
-            echo "<br>tipo ".$cadena_sql;exit;
+            //echo "<br>tipo ".$cadena_sql;exit;
             $datos_contrato = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
             return $datos_contrato[0][1];
     }
@@ -447,7 +447,7 @@ ________________________________________________________________________________
      */
     function consultarContratos($identificacion){
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"contratos",$identificacion);
-            echo "<br>cadena ".$cadena_sql;
+            //echo "<br>cadena ".$cadena_sql;
             $datos_contrato = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
             return $datos_contrato;
     }
@@ -463,6 +463,7 @@ ________________________________________________________________________________
         if(is_array($registro)){
             $cumplidos =array();
             $indice=0;
+            //var_dump($registro);
             foreach ($registro as $key => $arreglo) {
                         $cumplidos[$indice]['id'] = $arreglo['id'];
                         $cumplidos[$indice]['vigencia'] =$arreglo['vigencia'];
@@ -482,8 +483,11 @@ ________________________________________________________________________________
                         $cumplidos[$indice]['acumulado_dias_pagos'] =$arreglo['acumulado_dias_pagos'];
                         $cumplidos[$indice]['interno_co'] =$arreglo['interno_co'];
                         $cumplidos[$indice]['num_id_contratista'] =$arreglo['num_id_contratista'];
-                        $contratista = $this->consultarDatosContratista($cumplidos[$indice]['num_id_contratista']);
-                        $cumplidos[$indice]['nombre_contratista'] =$contratista[0]['PRIMER_NOMBRE']." ".$contratista[0]['SEGUNDO_NOMBRE']." ".$contratista[0]['PRIMER_APELLIDO']." ".$contratista[0]['SEGUNDO_APELLIDO'];
+                        $contratista = $this->consultarDatosContratista($arreglo['num_id_contratista']);
+                        $cumplidos[$indice]['nombre_contratista'] =$contratista[0]['PRIMER_NOMBRE'];
+                        $cumplidos[$indice]['nombre_contratista'] .=" ".(isset($contratista[0]['SEGUNDO_NOMBRE'])?$contratista[0]['SEGUNDO_NOMBRE']:'');
+                        $cumplidos[$indice]['nombre_contratista'] .=" ".$contratista[0]['PRIMER_APELLIDO'];
+                        $cumplidos[$indice]['nombre_contratista'] .=" ".$contratista[0]['SEGUNDO_APELLIDO'];
                         
                         $indice++;
             }
@@ -556,7 +560,7 @@ ________________________________________________________________________________
             
             $solicitudes = $this->consultarTodasSolicitudesCumplido($codigos_internos);
             $solicitudes = $this->asignarDatosContrato($solicitudes);
-            
+                    
             //var_dump($solicitudes);exit;
             $this->htmlCumplido->form_revisar_solicitud($this->configuracion, $solicitudes);
             
@@ -604,13 +608,14 @@ ________________________________________________________________________________
                     $nombre_finicio_cumplido = "finicio_cumplido_".$i;
                     $nombre_ffinal_cumplido = "ffinal_cumplido_".$i;
                     $nombre_dias_cumplido = "dias_cumplido_".$i;
+                    $nombre_acumulado_antes_pago = "acumulado_antes_pago_".$i;
                     $nombre_id_nov = "nov_id_".$i;
                     $nombre_vigencia = "vigencia_".$i;
                     $_REQUEST[$nombre]=(isset($_REQUEST[$nombre])?$_REQUEST[$nombre]:'');
                     $id_supervisor= $this->identificacion;
                     if($_REQUEST[$nombre]){
                         //echo "<br>".$nombre." seleccionado , id=".$_REQUEST[$nombre];
-                        $acumulado = $this->calcularAcumulado($_REQUEST[$nombre],$_REQUEST[$nombre_valor],$_REQUEST[$nombre_dias_cumplido]);
+                        $acumulado = $this->calcularAcumulado($_REQUEST[$nombre],$_REQUEST[$nombre_valor],$_REQUEST[$nombre_dias_cumplido],$_REQUEST[$nombre_acumulado_antes_pago]);
                         
                         $modificado = $this->aprobarSolicitud($_REQUEST[$nombre],$_REQUEST[$nombre_valor],$_REQUEST[$nombre_finicio_cumplido],$_REQUEST[$nombre_ffinal_cumplido],$_REQUEST[$nombre_dias_cumplido],$acumulado['valor'],$acumulado['dias'],$id_supervisor);
                             if($modificado>0){
@@ -621,13 +626,28 @@ ________________________________________________________________________________
                                     $datos_contrato = $this->consultarDatosContrato($interno_co, $vigencia);
                                     $cedula=$datos_contrato[0]['NUM_IDENTIFICACION'];
                                     $interno_mc=$datos_contrato[0]['INTERNO_MC'];
+                                    $cod_contrato=$datos_contrato[0]['NUM_CONTRATO'];
                                     $unidad=$datos_contrato[0]['CODIGO_UNIDAD_EJECUTORA'];
                                     $cod_supervisor=$datos_contrato[0]['FUNCIONARIO'];
                                     $cod_archivo=$cedula."_".$id_cumplido;
                                     $nov_afc= $this->consultarIdNovAFC($id_cumplido,$vigencia);
                                     $id_nov_afc= (isset($nov_afc[0]['cnov_nov_id'])?$nov_afc[0]['cnov_nov_id']:0);
                                     $this->generarCumplido($id_cumplido,$cedula,$vigencia,$interno_mc,$unidad,$cod_supervisor,$cod_archivo,$id_nov_afc);
+                                    //exit;
                                     $aprobados++;
+                                    //VARIABLES PARA EL LOG
+                                    $registro[0] = "APROBAR";
+                                    $registro[1] = $id_cumplido;
+                                    $registro[2] = "CUMPLIDO";
+                                    $registro[3] = $id_cumplido;
+                                    $registro[4] = time();
+                                    $registro[5] = "Aprobar solicitud cumplido ". $id_cumplido;
+                                    $registro[5] .= " - vigencia =". $vigencia;
+                                    $registro[5] .= " - cod_contrato =". $cod_contrato;
+                                    $registro[5] .= " - id_contratista =". $cedula;
+                                    
+                                    $this->log_us->log_usuario($registro,$this->configuracion);
+
                             }
                     }
                      //exit;
@@ -704,13 +724,26 @@ ________________________________________________________________________________
                 $vigencia=$solicitud['vigencia'];
                 $datos_contrato = $this->consultarDatosContrato($cod_contrato,$vigencia);
                 if($datos_contrato){
+                    //$contrato = $this->consultarDatosContrato($interno_oc,$vigencia);
+                    $disponibilidad = $this->consultarDatosDisponibilidad($datos_contrato[0]['INTERNO_MC'],$datos_contrato[0]['CODIGO_UNIDAD_EJECUTORA'],$vigencia);
+                    // var_dump($disponibilidad);//exit;
+                    $nro_cdp = $disponibilidad[0]['NUMERO_DISPONIBILIDAD']; 
+                    //$registroPresupuestal = $this->consultarDatosRegistroPresupuestal($nro_cdp,$contrato[0]['CODIGO_UNIDAD_EJECUTORA'],$vigencia);
+                    $ordenPago = $this->consultarDatosOrdenPago($datos_contrato[0]['NUM_IDENTIFICACION'],$nro_cdp,$vigencia);
+                    //echo "<br>cdp ".$nro_cdp;
+                    //var_dump($ordenPago);exit;
+                    
+                    $acumulado_antes_pago = $this->sumarPagos($ordenPago);
+                    //echo "<br>acum ".$acumulado_antes_pago;exit;
+                    
                     $solicitudes[$key]['identificacion']=$identificacion;
                     $solicitudes[$key]['nombre']=$datos_contrato[0]['RAZON_SOCIAL'];
                     $solicitudes[$key]['valor_contrato']=$datos_contrato[0]['CUANTIA'];
                     $solicitudes[$key]['finicio_contrato']=$datos_contrato[0]['FECHA_INICIO'];
                     $solicitudes[$key]['ffinal_contrato']=$datos_contrato[0]['FECHA_FINAL'];
-                    $solicitudes[$key]['dias_contrato']=360;
-
+                    $solicitudes[$key]['dias_contrato']=  $this->calcularDiasContrato($datos_contrato[0]['FECHA_INICIO'], $datos_contrato[0]['FECHA_FINAL']);
+                    $solicitudes[$key]['acumulado_antes_pago']=$acumulado_antes_pago;
+                    
                 }
 
             }
@@ -769,19 +802,25 @@ ________________________________________________________________________________
      * @param int $dias_cumplido
      * @return <array> 
      */
-    function calcularAcumulado($id_solicitud,$valor_cumplido,$dias_cumplido){
-        $cumplido = $this->consultarSolicitudes('','',$id_solicitud,'');
-        $anio = $cumplido[0]['anio'];
-        $mes = $cumplido[0]['mes'];
-        $vigencia=$cumplido[0]['vigencia'];
-        $num_contrato=$cumplido[0]['num_contrato'];
+    function calcularAcumulado($id_solicitud,$valor_cumplido,$dias_cumplido,$acumulado_pagos){
+//        $cumplido = $this->consultarSolicitudes('','',$id_solicitud,'');
+//        $anio = $cumplido[0]['anio'];
+//        $mes = $cumplido[0]['mes'];
+//        $vigencia=$cumplido[0]['vigencia'];
+//        $num_contrato=$cumplido[0]['num_contrato'];
         
-        $cumplido_anterior = $this->consultarCumplidoAnterior($vigencia,$num_contrato,$mes,$anio);
-        $valor_acumulado = (isset($cumplido_anterior['acumulado_valor_pagos'])?$cumplido_anterior['acumulado_valor_pagos']:0)+$valor_cumplido;
-        $dias_acumulados = (isset($cumplido_anterior['acumulado_dias_pagos'])?$cumplido_anterior['acumulado_dias_pagos']:0)+$dias_cumplido;
+        //$cumplido_anterior = $this->consultarCumplidoAnterior($vigencia,$num_contrato,$mes,$anio);
+        //$valor_acumulado = (isset($cumplido_anterior['acumulado_valor_pagos'])?$cumplido_anterior['acumulado_valor_pagos']:0)+$valor_cumplido;
+        //$dias_acumulados = (isset($cumplido_anterior['acumulado_dias_pagos'])?$cumplido_anterior['acumulado_dias_pagos']:0)+$dias_cumplido;
         
-        $acumulado['valor']=$valor_acumulado;
-        $acumulado['dias']=$dias_acumulados;
+        if($dias_cumplido>0){
+            $valor_dia =  $valor_cumplido/$dias_cumplido;
+            if($valor_dia>0){
+                $dias_acumulados = $acumulado_pagos/$valor_dia;
+            }
+        }        
+        $acumulado['valor']=$acumulado_pagos + $valor_cumplido;
+        $acumulado['dias']=$dias_acumulados + $dias_cumplido;
         return $acumulado;
         
     }
@@ -800,9 +839,9 @@ ________________________________________________________________________________
                                 'INTERNO_MC'=>$interno_mc,
                                 'UNIDAD'=>$unidad,
                                 'COD_SUPERVISOR'=>$cod_supervisor,
-                                'ID_NOV_AFC'=>$id_nov_afc
+                                'ID_NOV_AFC'=>(isset($id_nov_afc)?$id_nov_afc:'0')
                                 );
-
+            //var_dump($parametro_sql);
            include_once($this->configuracion["raiz_documento"] . $this->configuracion["bloques"]."/nomina/contratistas/nom_admin_cumplido_supervisor". $this->configuracion["clases"] . "/crearDocumento.class.php");
                 $this->Documento = new crearDocumento($this->configuracion);
                 $this->Documento->crearDocumento($tipo_documento,$parametro_sql,$cod_archivo);
@@ -907,7 +946,7 @@ ________________________________________________________________________________
     }
     
   /**
-         * Funcion que llama el formulario para solicitar un cumplido
+         * Funcion que llama el formulario mostrar los cumplidos
          */
         function consultar(){
             
@@ -923,6 +962,13 @@ ________________________________________________________________________________
             $this->mostrarListadoSolicitudes($solicitudes);
             
         }
+        
+        /**
+         * Funcion para consultar el codigo de una novedad de AFC
+         * @param int $id_cumplido
+         * @param int $vigencia
+         * @return <array> 
+         */
         function consultarIdNovAFC($id_cumplido,$vigencia){
             $datos = array( 'id_cumplido'=>$id_cumplido,
                             'vigencia'=>$vigencia
@@ -934,6 +980,92 @@ ________________________________________________________________________________
            
         }
        
+            /**
+     * Funcion para calcular la cantidad de días de un contrato a partir de la fecha inicial y fecha final de este
+     * @param date $fecha_inicio
+     * @param date $fecha_fin
+     * @return int 
+     */
+    function calcularDiasContrato($fecha_inicio,$fecha_fin){
+        if(strtotime($fecha_inicio) > strtotime($fecha_fin)){
+                echo "ERROR -> la fecha inicial es mayor a la fecha final <br>";
+               exit();
+        }else{
+//                $fecha_inicio="2013-01-05";
+//                $fecha_fin="2013-06-15";
+//                    
+                $dia_inicio= substr($fecha_inicio, 8,2);
+                $dia_fin= substr($fecha_fin, 8,2);
+                
+                $dias_mes_inicial = 30 - $dia_inicio + 1;
+                $dias_mes_final = $dia_fin;
+                $meses=$this->calcularCantidadMeses($fecha_inicio,$fecha_fin);
+                $meses=(int)$meses-1;
+                $dias_meses = $meses*30;
+     
+                $dias= $dias_mes_inicial + $dias_meses + $dias_mes_final;
+        }
+      
+        return $dias;
+    }
+    
+    
+    /**
+     * Funcion para calcular la cantidad de meses entre 2 fechas
+     * @param date $fecha_inicio
+     * @param date $fecha_fin
+     * @return int 
+     */
+    function calcularCantidadMeses($fecha_inicio,$fecha_fin){
+        $dia_inicio= substr($fecha_inicio, 8,2);
+        $mes_inicio= substr($fecha_inicio, 5,2);
+        $ano_inicio= substr($fecha_inicio, 0,4);
+
+        $dia_fin= substr($fecha_fin, 8,2);
+        $mes_fin= substr($fecha_fin, 5,2);
+        $ano_fin= substr($fecha_fin, 0,4);
+        $dif_anios = $ano_fin- $ano_inicio;
+                if($dif_anios == 1){
+                    $mes_inicio = 12 - $mes_inicio;
+                    $meses = $mes_fin + $mes_inicio;
+                   
+                   
+                }
+                else{
+                        if($dif_anios == 0){
+                            $meses=$mes_fin - $mes_inicio;
+                           
+                            
+                        }
+                        else{
+                            if($dif_anios > 1){
+                                $mes_inicio = 12 - $mes_inicio;
+                                $meses = $mes_fin + $mes_inicio + (($dif_anios - 1) * 12);
+                                
+                            //echo utf8_encode("la diferencia de meses con mas de un año de diferencia es -> ".$meses."<br>");
+                            }
+                            else { exit;    }
+                        }
+                    }
+                    return $meses;
+    }
+    
+    /**
+     * Funcion para sumar las ordenes de pago a partir del arreglo de OP
+     * @param <array> $ordenPago
+     * @return int 
+     */
+    function sumarPagos($ordenPago){
+        $acumulado=0;
+        if(is_array($ordenPago)){
+            foreach ($ordenPago as $op) {
+                $acumulado = $acumulado + $op['VALOR_OP'];
+            }
+        }
+        return $acumulado;
+    }
+    
+    
 } // fin de la clase
 	
 

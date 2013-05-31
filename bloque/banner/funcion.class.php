@@ -35,15 +35,9 @@ class funcion_bannerFlotante extends funcionGeneral {
     function mostrarbannerFlotante() {
         ?>
 
-        <link
-            href="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"]; ?>/banner/css/estiloBanner.css"
+        <link href="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"]; ?>/banner/css/estiloBanner.css"
             rel="stylesheet" type="text/css" />
-        <script
-            type="text/javascript"
-        src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"]; ?>/banner/js/jquery.js"></script>
-        <script
-            type="text/javascript"
-        src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"]; ?>/banner/js/codigo.js"></script>
+        <script  type="text/javascript" src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"]; ?>/banner/js/codigo.js"></script>
         <script>
 
             function ajaxFunction() {
@@ -69,19 +63,12 @@ class funcion_bannerFlotante extends funcionGeneral {
                 }
             }
         </script>
-
-        <header>
-
-
-            <div id="contenedorb">
-                <div id="contenedor_A">
-                </div>
-                <div id="contenedor_B">
-                </div>
+        <div id="contenedorb">
+            <div id="contenedor_A">
             </div>
-
-        </header>
-
+            <div id="contenedor_B">
+            </div>
+        </div>
         <?
     }
 

@@ -13,7 +13,9 @@ if(!isset($GLOBALS["autorizado"]))
 }
 
 
-class html_adminNominaOrdenador {
+include_once("funcion.class.php");
+
+class html_adminNominaOrdenador extends funciones_adminNominaOrdenador {
     
     public $configuracion;
     public $cripto;
@@ -40,7 +42,7 @@ class html_adminNominaOrdenador {
      * @param int $total
      * @param <array> $variable 
      */
-    function multiplesNominas($configuracion,$registro)
+    function multiplesNominas($configuracion,$registro,$sql,$accesoSIC)
 	{
 		include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
 		$indice = $configuracion["host"].$configuracion["site"]."/index.php?";
@@ -70,19 +72,33 @@ class html_adminNominaOrdenador {
                                                                                         <th width="15%">Fecha de registro</th>
                                                                                         <th width="20%">Supervisor</th>
                                                                                         <th width="20%">Ordenador del gasto</th>
-                                                                                        <th width="10%">Estado</th>
+                                                                                        <th width="5%">Estado</th>
+                                                                                        <th width="55%" colspan='2' >Ver</th>
                                                                                         
 										</tr><?
                                                                                 
                                                          foreach ($registro as $key => $value)
-                                                                {                                                                                                         
+                                                                {           //busca datos del rubro
+                                                                        $rubro=array('interno'=>$registro[$key]['nom_rubro_interno'],
+                                                                                     'vigencia'=>$registro[$key]['nom_anio']   );
+                                                                        $rubro_sql = $sql->cadena_sql($this->configuracion,"","datos_rubro",$rubro);
+                                                                        $resultadoRB = $this->ejecutarSQL($this->configuracion, $accesoSIC, $rubro_sql, "busqueda");
+                                                                        //busca datos del ordenador del gasto
+                                                                        $ordenador_sql = $sql->cadena_sql($this->configuracion,"","datos_ordenador",$registro[$key]['nom_num_id_ordenador']);
+                                                                        $resultadoORD = $this->ejecutarSQL($this->configuracion, $accesoSIC, $ordenador_sql, "busqueda");
+                                                                        $dependenciaOrd_sql = $sql->cadena_sql($this->configuracion,"","nombre_dependencia",$resultadoORD[0]['COD_DEPENDENCIA']);
+                                                                        $resultadoDEP_ORD = $this->ejecutarSQL($this->configuracion, $accesoSIC,$dependenciaOrd_sql, "busqueda");
+                                                                        //busca datos de supervisor del contrato
+                                                                        $dependencia_sql = $sql->cadena_sql($this->configuracion,"","nombre_dependencia",$registro[$key]['nom_cod_dep_supervisor']);
+                                                                        $resultadoDEP = $this->ejecutarSQL($this->configuracion, $accesoSIC, $dependencia_sql, "busqueda");
+                                                                        
                                                         		$id = (isset($registro[$key]['nom_id'])?$registro[$key]['nom_id']:'');
-                                                                        $rubro = (isset($registro[$key]['nom_rubro_interno'])?$registro[$key]['nom_rubro_interno']:'');
+                                                                        $rubro = (isset($resultadoRB[0]['NOM_RUBRO'])? $resultadoRB[0]['NOM_RUBRO']:'');
 									$anio= (isset($registro[$key]['nom_anio'])?$registro[$key]['nom_anio']:'');
-                                                                        $mes = (isset($registro[$key]['nom_mes'])?$registro[$key]['nom_mes']:'');
+                                                                        $mes = (isset($registro[$key]['nom_mes'])?$this->nombreMes($registro[$key]['nom_mes']):'');
                                                                         $fecha_registro= (isset($registro[$key]['nom_fecha_registro'])?$registro[$key]['nom_fecha_registro']:'');
-                                                                        $supervisor= (isset($registro[$key]['nom_cod_dep_supervisor'])?$registro[$key]['nom_cod_dep_supervisor']:'');
-                                                                        $ordenador= (isset($registro[$key]['nom_num_id_ordenador'])?$registro[$key]['nom_num_id_ordenador']:'');
+                                                                        $supervisor= (isset($resultadoDEP[0]['NOMBRE_DEPENDENCIA'])?$resultadoDEP[0]['NOMBRE_DEPENDENCIA']:'');
+                                                                        $ordenador= (isset($resultadoDEP_ORD[0]['NOMBRE_DEPENDENCIA'])?$resultadoDEP_ORD[0]['NOMBRE_DEPENDENCIA']:'');
                                                                         $estado= (isset($registro[$key]['nom_estado'])?$registro[$key]['nom_estado']:'');
                                                                         //var_dump($registro);exit;
                                                                         if($estado=='APROBADO'){
@@ -101,7 +117,7 @@ class html_adminNominaOrdenador {
                                                                         
 									
 									echo "	<tr> 
-										 	<td class='texto_elegante estilo_td'><a href='".$indice.$parametro."'>".$id."</a></td>
+										 	<td class='texto_elegante estilo_td'>".$id."</td>
                                                                                         <td class='texto_elegante estilo_td'>".$rubro."</td>    
 											<td class='texto_elegante estilo_td'>".$anio."</td>    
                                                                                         <td class='texto_elegante estilo_td'>".$mes."</td>    
@@ -109,6 +125,8 @@ class html_adminNominaOrdenador {
                                                                                         <td class='texto_elegante estilo_td'>".$supervisor."</td>    
                                                                                         <td class='texto_elegante estilo_td'>".$ordenador."</td>    
                                                                                         <td class='texto_elegante estilo_td'>".$estado."</td>    
+                                                                                        <td class='texto_elegante estilo_td'><a href='".$indice.$parametro."'>Impreso</a></td>
+                                                                                        <td class='texto_elegante estilo_td'><a href='".$indice.$parametro."'>Resumen</a></td>
                                                                                         
 										</tr>";
 					
@@ -128,6 +146,119 @@ class html_adminNominaOrdenador {
         
     
         /**
+         * funcion que muestra la información del reporte
+         */
+        
+        function mostrarNominaImpresa($configuracion,$registro,$nombre,$titulo)
+        {   /*
+            include_once($this->configuracion["raiz_documento"] . $this->configuracion["bloques"]."/nomina/contratistas/nom_admin_nomina_ordenador". $this->configuracion["clases"] . "/reporteadorHtml.class.php");
+            $reporte = new reporteador();
+            $reporte->mostrarReporte($configuracion,$registro,$nombre,$titulo);
+            */
+            //var_dump($registro);
+		?><table width="95%" align="center" border="0" cellpadding="5" cellspacing="0" >
+			<tbody>
+				<tr>
+					<td >
+						<table class="bordered" width="100%" align="center" cellpadding="5 px" cellspacing="1px" >
+                                                        <tr class="texto_tituloPrincipal centrar ">
+								<th  colspan='27'>Universidad Distrital Francisco Jos&eacute de Caldas
+								</th>
+							</tr>
+							<tr class="texto_subtituloPrincipal centrar ">
+								<th  colspan='27'> <? echo $titulo; ?></th>
+							</tr>
+                                                        <tr class="texto_subtitulo">
+                                                                <th colspan='2'>Dependencia:</th>
+                                                                <th colspan='26' ><? echo $registro[0]['Dependencia']; ?></th>
+                                                        </tr>
+                                                        <tr class="texto_subtitulo">
+                                                                <th colspan='2'>Rubro:</th>
+                                                                <th colspan='26'><? echo $registro[0]['Rubro']; ?></th>
+                                                        </tr>
+                                                        <tr class="texto_subtitulo">
+                                                                <th colspan='2'>Ordenador del Gasto:</th>
+                                                                <th colspan='8'><? echo $registro[0]['Ordenador_del_gasto']; ?></th>
+                                                                <th >Nombre:</th>
+                                                                <th colspan='16' ><? echo $registro[0]['Nombre_ordenador']; ?></th>
+                                                        </tr>
+                                                        
+                                                        <tr class='encabezado_registro'>
+                                                                <th width="3%"> C.C o NIT Nro</th>
+                                                                <th width="45%">Apellidos y Nombres</th>
+                                                                <th width="2%">Nro Contrato</th>
+                                                                <th width="2%">CDP. No</th>
+                                                                <th width="2%">RP. No</th>
+                                                                <th width="2%">Código Banco</th>
+                                                                <th width="4%">Nombre Banco</th>
+                                                                <th width="2%">Nro Cuenta </th>
+                                                                <th width="2%">Neto a abonar a la cuenta bancaria</th>
+                                                                <th width="2%">Neto a aplicar en sicapital</th>
+                                                                <th width="2%">Neto a pagar despues de Retenciones</th>
+                                                                <th width="2%">Valor antes de IVA</th>
+                                                                <th width="2%">Valor IVA</th>
+                                                                <th width="2%">Valor Base Retefuente</th>
+                                                                <th width="2%">% Retefuente</th>
+                                                                <th width="2%">Valor Retefuente</th>
+                                                                <th width="2%">Valor Reteiva</th>
+                                                                <th width="2%">Valor Base ICA y Estampillas</th>
+                                                                <th width="2%">Valor ICA</th>
+                                                                <th width="2%">Valor Estampilla UD</th>
+                                                                <th width="2%">Valor Estampilla Procultura</th>
+                                                                <th width="2%">Valor Estampilla Pro-adulto Mayor</th>
+                                                                <th width="2%">Valor ARP</th>
+                                                                <th width="2%">Valor Dcto Cooperativas y depositosjudiciales</th>
+                                                                <th width="2%">Valor AFC</th>
+                                                                <th width="2%">Valor Salud</th>
+                                                                <th width="2%">Valor Pensi&oacute;n</th>
+                                                        </tr><?
+
+                                            foreach ($registro as $key => $value)
+                                                   {   //busca datos del rubro
+                                                    echo " <tr> 
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['no_c.c_o_nit']."</td>
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['primer_apellido']." ".$registro[$key]['segundo_apellido']." ".$registro[$key]['primer_nombre']." ".$registro[$key]['segundo_nombre']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['numero_contrato']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['C.D.P._No']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['R.P._No']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['codigo_banco']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['nombre_banco']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['cuenta_No']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_neto_a_abonar_a_la_cuenta_bancaria']."</td>        
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_neto_a_aplicar_en_sicapital']."</td>
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_neto_a_aplicar_en_sicapital']."</td>
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_liquidacion_antes_iva']."</td>     
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_iva']."</td>
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_base_retefuente_renta']."</td> 
+                                                                <td class='derecha texto_elegante estilo_td '>".$registro[$key]['porcentaje_retefuente']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_retefuente_renta']."</td> 
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_reteiva']."</td>
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_base_ica_estampillas']."</td>
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_ica']."</td>
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_estampilla_ud']."</td>      
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_estampilla_procultura']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_estampilla_pro-adultomayor']."</td> 
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_arp']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_dcto_cooperativas_y_depositos_judiciales']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_afc']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_salud']."</td>    
+                                                                <td class='texto_elegante estilo_td'>".$registro[$key]['valor_pension']."</td>    
+                                                           </tr>";
+                                                        }//fin for 
+                                                        
+                                                        ?>
+						</table>
+					</td>
+				</tr>
+				
+			</tbody>
+		</table>
+		<?            
+            
+            
+        }
+        
+                /**
          * funcion que muestra la información del reporte
          */
         
@@ -158,13 +289,12 @@ class html_adminNominaOrdenador {
      * @param <array> $variable 
      */
     function form_revisar_solicitud($configuracion,$registro)
-	{
+	{        
 		include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
 		$indice = $configuracion["host"].$configuracion["site"]."/index.php?";
 		$cripto = new encriptar();
                 $tab=0;
                 $total_registros = count($registro);
-		
 		?>
                 <link rel="stylesheet" href="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/css/jPages.css">
 
@@ -212,7 +342,7 @@ class html_adminNominaOrdenador {
 					<td >
 						<table class="bordered" width="100%" border="0" align="center" cellpadding="5 px" cellspacing="1px" >
 							<tr class="texto_subtitulo">
-								<th >Pagos de nomina solicitados
+								<th >Pagos de nomina solicitados 
 								</th>
 							</tr>
 							<tr>
@@ -224,18 +354,25 @@ class html_adminNominaOrdenador {
 											<th width="5%">Vigencia</th>
 											<th width="5%">N&uacute;mero de Contrato </th>
                                                                                         <th width="5%">Contratista </th>
+                                                                                        <th width="5%">Saldo contrato antes de pago </th>
                                                                                         <th width="5%">Fecha inicio Pago </th>
                                                                                         <th width="5%">Fecha finalizaci&oacute;n Pago </th>
                                                                                         <th width="5%">Cantidad d&iacute;as Pago </th>
+                                                                                        <th width="5%">R&eacute;gimen Com&uacute;n </th>
+                                                                                        <th width="5%">Declara renta</th>
                                                                                         <th width="5%">Valor Pago antes de Iva($)</th>
                                                                                         <th width="5%">AFC ($)</th>
                                                                                         <th width="5%">Cooperativas o depósitos ($)</th>
                                                                                         <th width="5%">Salud ($)</th>
                                                                                         <th width="5%">Pensi&oacute;n ($)</th>
                                                                                         <th width="5%">ARP ($)</th>
+                                                                                        <th width="5%">Base Retefuente  ($)</th>
+                                                                                        <th width="5%">Retefuente 099/13 ($)</th>
+                                                                                        <th width="5%">Retefuente IMAN ($)</th>
                                                                                         <th width="5%">Retefuente  ($)</th>
                                                                                         <th width="5%">IVA ($)</th>
                                                                                         <th width="5%">RETEIVA ($)</th>
+                                                                                        <th width="5%">Base ICA y estampillas($)</th>
                                                                                         <th width="5%">ICA ($)</th>
                                                                                         <th width="5%">Estampilla UD ($)</th>
                                                                                         <th width="5%">Estampilla Procultura ($)</th>
@@ -250,7 +387,7 @@ class html_adminNominaOrdenador {
                                                                                                 {        
                                                                                                         $id = (isset($registro[$key]['id'])?$registro[$key]['id']:'');
                                                                                                         $detalle_id=(isset($registro[$key]['detalle_id'])?$registro[$key]['detalle_id']:'');
-                                                                                                        $dependencia = (isset($registro[$key]['dependencia'])?$registro[$key]['dependencia']:'');
+                                                                                                        $nombre_dependencia = (isset($registro[$key]['nombre_dependencia'])?$registro[$key]['nombre_dependencia']:'');
                                                                                                         $vigencia = (isset($registro[$key]['vigencia'])?$registro[$key]['vigencia']:'');
                                                                                                         $num_contrato = (isset($registro[$key]['num_contrato'])?$registro[$key]['num_contrato']:'');
                                                                                                         $tipo_id = (isset($registro[$key]['tipo_id'])?$registro[$key]['tipo_id']:'');
@@ -264,39 +401,60 @@ class html_adminNominaOrdenador {
                                                                                                         $valor_salud =  floatval(isset($registro[$key]['salud'])?$registro[$key]['salud']:'');
                                                                                                         $valor_pension =  floatval(isset($registro[$key]['pension'])?$registro[$key]['pension']:'');
                                                                                                         $valor_arp =  floatval(isset($registro[$key]['arp'])?$registro[$key]['arp']:'');
+                                                                                                        $valor_base_retefuente =  floatval(isset($registro[$key]['base_retefuente'])?$registro[$key]['base_retefuente']:'');
+                                                                                                        $valor_retefuente_099 =  floatval(isset($registro[$key]['retefuente_099'])?$registro[$key]['retefuente_099']:'');
+                                                                                                        $valor_retefuente_iman =  floatval(isset($registro[$key]['retefuente_iman'])?$registro[$key]['retefuente_iman']:'');
                                                                                                         $valor_retefuente =  floatval(isset($registro[$key]['retefuente'])?$registro[$key]['retefuente']:'');
                                                                                                         $valor_iva =  floatval(isset($registro[$key]['iva'])?$registro[$key]['iva']:'');
                                                                                                         $valor_reteiva =  floatval(isset($registro[$key]['reteiva'])?$registro[$key]['reteiva']:'');
+                                                                                                        $valor_base_ica_estampillas =  floatval(isset($registro[$key]['base_ica_estampillas'])?$registro[$key]['base_ica_estampillas']:'');
                                                                                                         $valor_ica =  floatval(isset($registro[$key]['ica'])?$registro[$key]['ica']:'');
                                                                                                         $valor_estampilla_ud =  floatval(isset($registro[$key]['estampilla_ud'])?$registro[$key]['estampilla_ud']:'');
                                                                                                         $valor_estampilla_procultura =  floatval(isset($registro[$key]['estampilla_procultura'])?$registro[$key]['estampilla_procultura']:'');
                                                                                                         $valor_estampilla_proadultomayor =  floatval(isset($registro[$key]['estampilla_proadultomayor'])?$registro[$key]['estampilla_proadultomayor']:'');
+                                                                                                        $valor_saldo_antes_pago=  floatval(isset($registro[$key]['saldo_antes_pago'])?$registro[$key]['saldo_antes_pago']:'');
+                                                                                                        $regimen_comun= (isset($registro[$key]['regimen_comun'])?$registro[$key]['regimen_comun']:'');
+                                                                                                        $declarante= (isset($registro[$key]['declarante'])?$registro[$key]['declarante']:'');
+                                                                                                        $pensionado= (isset($registro[$key]['pensionado'])?$registro[$key]['pensionado']:'');
+                                                                                                        $pasante= (isset($registro[$key]['pasante'])?$registro[$key]['pasante']:'');
                                                                                                         
                                                                                                         echo "	<tr> 
-                                                                                                                        <td class='texto_elegante estilo_td'>".$dependencia."</td>    
+                                                                                                                        <td class='texto_elegante estilo_td'>".$nombre_dependencia."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$vigencia."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$num_contrato."</td>    
-                                                                                                                        <td class='texto_elegante estilo_td'>".$num_id."</td>    
+                                                                                                                        <td class='texto_elegante estilo_td'>".$num_id."</td>   
+                                                                                                                        <td class='texto_elegante estilo_td'>".number_format($valor_saldo_antes_pago, 2)."</td>   
                                                                                                                         <td class='texto_elegante estilo_td'>".$fecha_inicio_per."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$fecha_final_per."</td>   
                                                                                                                         <td class='texto_elegante estilo_td'>".$num_dias."</td>   
+                                                                                                                        <td class='texto_elegante estilo_td'>".$regimen_comun."</td>   
+                                                                                                                        <td class='texto_elegante estilo_td'>".$declarante."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_antes_iva, 2)."</td>    
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_afc, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_coop_depositos, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_salud, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_pension, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_arp, 2)."</td>   
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".number_format($valor_base_retefuente, 2)."</td>   
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".number_format($valor_retefuente_099, 2)."</td>   
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".number_format($valor_retefuente_iman, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_retefuente, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_iva, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_reteiva, 2)."</td>   
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".number_format($valor_base_ica_estampillas, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_ica, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_estampilla_ud, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_estampilla_procultura, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_estampilla_proadultomayor, 2)."</td>   
                                                                                                                         <td class='texto_elegante_centrado estilo_td'><input value='".$detalle_id."' name='id_solicitud_".$key."' type='checkbox' /></td>    
+                                                                                                                        <input type='hidden' name='vigencia_".$key."' value='".$vigencia."'>
+                                                                                                                        <input type='hidden' name='valor_base_retefuente_".$key."' value='".$valor_base_retefuente."'>
                                                                                                                         <input type='hidden' name='valor_retefuente_".$key."' value='".$valor_retefuente."'>
+                                                                                                                        <input type='hidden' name='valor_retefuente_099_".$key."' value='".$valor_retefuente_099."'>
+                                                                                                                        <input type='hidden' name='valor_retefuente_iman_".$key."' value='".$valor_retefuente_iman."'>
                                                                                                                         <input type='hidden' name='valor_iva_".$key."' value='".$valor_iva."'>
                                                                                                                         <input type='hidden' name='valor_reteiva_".$key."' value='".$valor_reteiva."'>
+                                                                                                                        <input type='hidden' name='valor_base_ica_estampillas_".$key."' value='".$valor_base_ica_estampillas."'>
                                                                                                                         <input type='hidden' name='valor_ica_".$key."' value='".$valor_ica."'>
                                                                                                                         <input type='hidden' name='valor_estampilla_ud_".$key."' value='".$valor_estampilla_ud."'>
                                                                                                                         <input type='hidden' name='valor_estampilla_procultura_".$key."' value='".$valor_estampilla_procultura."'>
@@ -715,6 +873,7 @@ class html_adminNominaOrdenador {
      */
     function form_revisar_nomina($configuracion,$periodo_pago,$registro)
 	{
+        //echo "<br>form revisar";
         //var_dump($registro);//exit;
 		include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
 		$indice = $configuracion["host"].$configuracion["site"]."/index.php?";
@@ -777,8 +936,8 @@ class html_adminNominaOrdenador {
                                
                         <tr>
                                 <td width='25%' class="texto_elegante estilo_td"><?
-                                        $texto_ayuda = "<b>Mes de cumplido.</b><br>Seleccione una opción de la lista. ";
-                                        ?><font color="red" >*</font>&nbsp;<span onmouseover="return escape('<? echo $texto_ayuda?>')">Mes de cumplido:</span>
+                                        $texto_ayuda = "<b>Mes de nomina.</b><br>Seleccione una opción de la lista. ";
+                                        ?><font color="red" >*</font>&nbsp;<span onmouseover="return escape('<? echo $texto_ayuda?>')">Mes de nomina:</span>
                                 </td>
                                 <td class="texto_elegante estilo_td"><div id='DIV_PERIODOS_PAGO'>
                                         <?
@@ -791,7 +950,7 @@ class html_adminNominaOrdenador {
 		</table>
 						<table class="bordered" width="100%" border="0" align="center" cellpadding="5 px" cellspacing="1px" >
 							<tr class="texto_subtitulo">
-								<th >Pagos de nomina solicitados
+								<th >Pagos de nomina solicitados aprobados
 								</th>
 							</tr>
 							<tr>
@@ -824,6 +983,7 @@ class html_adminNominaOrdenador {
                                                                                         <th width="5%">Fecha corte Periodo </th>
                                                                                         <th width="5%">Cantidad d&iacute;as Pago </th>
                                                                                         <th width="5%">R&eacute;gimen Com&uacute;n</th>
+                                                                                        <th width="5%">Declara Renta</th>
                                                                                         <th width="5%">Valor Pago antes de Iva($)</th>
                                                                                         <th width="5%">IVA ($)</th>
                                                                                         <th width="5%">TOTAL ($)</th>
@@ -856,7 +1016,11 @@ class html_adminNominaOrdenador {
                                                                                             foreach ($registro as $key => $value)
                                                                                                 {        
                                                                                                         $detalle_id=(isset($registro[$key]['detalle_id'])?$registro[$key]['detalle_id']:'');
-                                                                                                        $dependencia = (isset($registro[$key]['dependencia'])?$registro[$key]['dependencia']:'');
+                                                                                                        $cumplido_id=(isset($registro[$key]['cumplido_id'])?$registro[$key]['cumplido_id']:'');
+                                                                                                        $num_solicitud_pago=(isset($registro[$key]['num_solicitud_pago'])?$registro[$key]['num_solicitud_pago']:'');
+                                                                                                        $cod_dependencia = (isset($registro[$key]['cod_dependencia'])?$registro[$key]['cod_dependencia']:'');
+                                                                                                        $nombre_dependencia = (isset($registro[$key]['nombre_dependencia'])?$registro[$key]['nombre_dependencia']:'');
+                                                                                                        
                                                                                                         $vigencia = (isset($registro[$key]['vigencia'])?$registro[$key]['vigencia']:'');
                                                                                                         $num_contrato = (isset($registro[$key]['numero_contrato'])?$registro[$key]['numero_contrato']:'');
                                                                                                         $tipo_id = (isset($registro[$key]['tipo_id'])?$registro[$key]['tipo_id']:'');
@@ -864,6 +1028,8 @@ class html_adminNominaOrdenador {
                                                                                                         $fecha_inicio_per = (isset($registro[$key]['fecha_inicio_periodo'])?$registro[$key]['fecha_inicio_periodo']:'');
                                                                                                         $fecha_final_per = (isset($registro[$key]['fecha_final_periodo'])?$registro[$key]['fecha_final_periodo']:'');
                                                                                                         $num_dias= (isset($registro[$key]['dias_pagados'])?$registro[$key]['dias_pagados']:'');
+                                                                                                        
+                                                                                                        $valor_saldo_antes_de_pago = floatval(isset($registro[$key]['valor_saldo_antes_de_pago'])?$registro[$key]['valor_saldo_antes_de_pago']:'');
                                                                                                         $valor_antes_iva = floatval(isset($registro[$key]['valor_liquidacion_antes_iva'])?$registro[$key]['valor_liquidacion_antes_iva']:'');
                                                                                                         $valor_afc= floatval(isset($registro[$key]['valor_afc'])?$registro[$key]['valor_afc']:'');
                                                                                                         $valor_coop_depositos= floatval(isset($registro[$key]['coop_depositos'])?$registro[$key]['coop_depositos']:'');
@@ -883,6 +1049,8 @@ class html_adminNominaOrdenador {
                                                                                                         $primer_nombre= (isset($registro[$key]['primer_nombre'])?$registro[$key]['primer_nombre']:'');
                                                                                                         $segundo_nombre= (isset($registro[$key]['segundo_nombre'])?$registro[$key]['segundo_nombre']:'');
                                                                                                         $cdp =  (isset($registro[$key]['cdp'])?$registro[$key]['cdp']:'');
+                                                                                                        $interno_rubro =  (isset($registro[$key]['interno_rubro'])?$registro[$key]['interno_rubro']:'');
+                                                                                                        $id_tipo_nomina =  (isset($registro[$key]['id_tipo_nomina'])?$registro[$key]['id_tipo_nomina']:'');
                                                                                                         $rp =  (isset($registro[$key]['rp'])?$registro[$key]['rp']:'');
                                                                                                         $codigo_banco =  (isset($registro[$key]['codigo_banco'])?$registro[$key]['codigo_banco']:'');
                                                                                                         $nombre_banco =  (isset($registro[$key]['nombre_banco'])?$registro[$key]['nombre_banco']:'');
@@ -899,9 +1067,17 @@ class html_adminNominaOrdenador {
                                                                                                         $valor_neto_a_aplicar_en_sicapital =  floatval(isset($registro[$key]['valor_neto_a_aplicar_en_sicapital'])?$registro[$key]['valor_neto_a_aplicar_en_sicapital']:'');
                                                                                                         $valor_total_descuento_sin_retenciones =  floatval(isset($registro[$key]['valor_total_descuento_sin_retenciones'])?$registro[$key]['valor_total_descuento_sin_retenciones']:'');
                                                                                                         $valor_neto_a_pagar_sin_aplicar_retenciones =  floatval(isset($registro[$key]['valor_neto_a_pagar_sin_aplicar_retenciones'])?$registro[$key]['valor_neto_a_pagar_sin_aplicar_retenciones']:'');
+                                                                                                        $valor_saldo_corte_pago =  $valor_saldo_antes_de_pago-$valor_antes_iva;
+                                                                                                        
+                                                                                                        $regimen_comun = (isset($registro[$key]['regimen_comun'])?$registro[$key]['regimen_comun']:'');
+                                                                                                        $declarante = (isset($registro[$key]['declarante'])?$registro[$key]['declarante']:'');
+                                                                                                        $pensionado = (isset($registro[$key]['pensionado'])?$registro[$key]['pensionado']:'');
+                                                                                                        $pasante = (isset($registro[$key]['pasante_monitoria'])?$registro[$key]['pasante_monitoria']:'');
+                                                                                                        $caso_especial= '';
+                                                                                                        
                                                                                                         
                                                                                                         echo "	<tr> 
-                                                                                                                        <td class='texto_elegante estilo_td'>".$dependencia."</td>    
+                                                                                                                        <td class='texto_elegante estilo_td'>".$nombre_dependencia."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$vigencia."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$num_contrato."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$num_id."</td>    
@@ -921,11 +1097,12 @@ class html_adminNominaOrdenador {
                                                                                                                         <td class='texto_elegante estilo_td'>".$valor_contrato."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$fecha_inicio_contrato."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$fecha_final_contrato."</td>    
-                                                                                                                        <td class='texto_elegante estilo_td'>"."</td>    
+                                                                                                                        <td class='texto_elegante estilo_td'>".$valor_saldo_antes_de_pago."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$fecha_inicio_per."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$fecha_final_per."</td>   
                                                                                                                         <td class='texto_elegante estilo_td'>".$num_dias."</td>   
-                                                                                                                        <td class='texto_elegante_der estilo_td'>"."</td>    
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".$regimen_comun."</td>    
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".$declarante."</td>    
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_antes_iva, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_iva, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_total, 2)."</td>   
@@ -942,24 +1119,32 @@ class html_adminNominaOrdenador {
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_afc, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_total_descuento_sin_retenciones, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_neto_a_pagar_sin_aplicar_retenciones, 2)."</td>   
-                                                                                                                        <td class='texto_elegante_der estilo_td'>"."</td>   
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".number_format($valor_saldo_corte_pago, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_salud, 2)."</td>   
                                                                                                                         <td class='texto_elegante_der estilo_td'>".number_format($valor_pension, 2)."</td>   
-                                                                                                                        <td class='texto_elegante_der estilo_td'>"."</td>   
-                                                                                                                        <td class='texto_elegante_der estilo_td'>"."</td>   
-                                                                                                                        <td class='texto_elegante_der estilo_td'>"."</td>   
-                                                                                                                        <td class='texto_elegante_centrado estilo_td'><input value='".$detalle_id."' name='id_solicitud_".$key."' type='checkbox' /></td>    
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".$pensionado."</td>   
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".$caso_especial."</td>   
+                                                                                                                        <td class='texto_elegante_der estilo_td'>".$pasante."</td>   
+                                                                                                                        <td class='texto_elegante_centrado estilo_td'><input value='".$detalle_id."' name='id_detalle_".$key."' type='checkbox' /></td>    
+                                                                                                                        <input type='hidden' name='cumplido_id_".$key."' value='".$cumplido_id."'>
+                                                                                                                        <input type='hidden' name='vigencia_".$key."' value='".$vigencia."'>
+                                                                                                                        <input type='hidden' name='num_solicitud_pago_".$key."' value='".$num_solicitud_pago."'>
+                                                                                                                        <input type='hidden' name='interno_rubro_".$key."' value='".$interno_rubro."'>
                                                                                                                         <input type='hidden' name='valor_total_".$key."' value='".$valor_total."'>
                                                                                                                         <input type='hidden' name='valor_neto_a_pagar_sin_aplicar_retenciones_".$key."' value='".$valor_neto_a_pagar_sin_aplicar_retenciones."'>
                                                                                                                         <input type='hidden' name='valor_neto_a_abonar_a_la_cuenta_bancaria_".$key."' value='".$valor_neto_a_abonar_a_la_cuenta_bancaria."'>
                                                                                                                         <input type='hidden' name='valor_neto_a_aplicar_en_sicapital_".$key."' value='".$valor_neto_a_aplicar_en_sicapital."'>
                                                                                                                         <input type='hidden' name='valor_total_descuento_sin_retenciones_".$key."' value='".$valor_total_descuento_sin_retenciones."'>
+                                                                                                                        <input type='hidden' name='valor_saldo_corte_pago_".$key."' value='".$valor_saldo_corte_pago."'>
+                                                                                                                        <input type='hidden' name='cod_dependencia_".$key."' value='".$cod_dependencia."'>
+                                                                                                                        <input type='hidden' name='id_tipo_nomina_".$key."' value='".$id_tipo_nomina."'>
+                                                                                                                            
                                                                                                                         
                                                                                                                 </tr>";
 
                                                                                                 }//fin for 
                                                                                         }else{
-                                                                                            echo "<tr><td colspan=6>No hay registros de solicitudes por aprobar</td></tr>";
+                                                                                            echo "<tr><td colspan=6>No hay registros de solicitudes pendientes</td></tr>";
                                                                                         }
                                                                                     ?>      
                                                                                 </tbody>

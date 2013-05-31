@@ -141,16 +141,18 @@ class html_adminCumplidoContratista {
      */
         function form_envio_solicitud($contrato, $solicitud, $cuentas, $tema='',$estilo='')
 	{
-            //var_dump($solicitud);
+            
 		$indice=$this->configuracion["host"].$this->configuracion["site"]."/index.php?";
                 $cod_contrato=(isset($contrato[0]['NUM_CONTRATO'])?$contrato[0]['NUM_CONTRATO']:'');
                 $vigencia_contrato=(isset($contrato[0]['VIGENCIA'])?$contrato[0]['VIGENCIA']:'');
+		$valor_contrato=(isset($solicitud[0]['valor_contrato'])?$solicitud[0]['valor_contrato']:'');
+		$saldo_contrato=(isset($solicitud[0]['saldo_contrato'])?$solicitud[0]['saldo_contrato']:'');
 		/*****************************************************************************************************/
 		include_once($this->configuracion["raiz_documento"].$this->configuracion["clases"]."/html.class.php");
 
 		$tab = 1;
 		$this->formulario = "nom_admin_cumplido_contratista";
-		if(is_array($cuentas)){
+                if(is_array($cuentas)){
                     $this->verificar = "seleccion_valida(".$this->formulario.",'cta_id')";
                     $lista_cuentas = $this->html->cuadro_lista($cuentas,'cta_id',$this->configuracion,-1,0,FALSE,$tab++,'cta_id');
                 } else{
@@ -171,8 +173,20 @@ class html_adminCumplidoContratista {
                 $afc = (isset($solicitud[0]['valor_afc'])?$solicitud[0]['valor_afc']:'');
                 if($afc){
                     $nov_id_afc = (isset($solicitud[0]['nov_id_afc'])?$solicitud[0]['nov_id_afc']:'');
+                }else{
+                    $nov_id_afc ='';
                 }
-                $cod_supervisor=(isset($solicitud[0]['cod_supervisor'])?$solicitud[0]['cod_supervisor']:'');
+                $cooperativas_depositos =(isset($solicitud[0]['valor_cooperativas_depositos'])?$solicitud[0]['valor_cooperativas_depositos']:'');;
+                if($cooperativas_depositos){
+                    $nov_id_cooperativas = (isset($solicitud[0]['nov_id_cooperativas_depositos'])?$solicitud[0]['nov_id_cooperativas_depositos']:'');
+                }else{
+                    $nov_id_cooperativas ='';
+                }$cod_supervisor=(isset($solicitud[0]['cod_supervisor'])?$solicitud[0]['cod_supervisor']:'');
+                
+                $declarante = (isset($solicitud[0]['declarante'])?$solicitud[0]['declarante']:'');
+                $regimen_comun = (isset($solicitud[0]['regimen_comun'])?$solicitud[0]['regimen_comun']:'');
+                $pensionado = (isset($solicitud[0]['pensionado'])?$solicitud[0]['pensionado']:'');
+                $pasante = (isset($solicitud[0]['pasante'])?$solicitud[0]['pasante']:'');
                 
                 
                 ?>
@@ -193,6 +207,7 @@ class html_adminCumplidoContratista {
                         <tr><td >
                             <? 
                                 echo "<br><b>Vigencia contrato:</b> ".$vigencia_contrato;
+                                echo "<br><b>Valor contrato:</b> $".number_format($valor_contrato,1);
                                 echo "<br><b> Periodo pago (AAAA-MM):</b> ".$anio_cumplido." - ".$mes_cumplido;
                                 echo "<br><b> Fecha inicial periodo:</b> ".$finicial_per;
                                 echo "<br><b> Fecha final periodo:</b> ".$ffinal_per;
@@ -202,18 +217,23 @@ class html_adminCumplidoContratista {
                                 echo "<br><b> Pensión:</b> $ ".number_format($pension,1);
                                 echo "<br><b> ARP:</b> $ ".number_format($arp,1);
                                 echo "<br><b> AFC:</b> $ ".number_format($afc,1);
+                                echo "<br><b> Cooperativas y depositos:</b> $ ".number_format($cooperativas_depositos,1);
+                                echo "<br><b> Declarante de renta:</b> ".$declarante;
+                                echo "<br><b> Régimen Común:</b> ".$regimen_comun;
+                                echo "<br><b> Pensionado:</b> ".$pensionado;
+                                echo "<br><b> Pasante o monitoria:</b> ".$pasante;
                                 ?>        
                             </td>
                         </tr>
                         
                         <tr><td class='texto_elegante estilo_td' ><br>
                         <?
-                            if($cuentas){
+                            if(is_array($cuentas)){
                                 echo "  Seleccione la cuenta a la cual le deben consignar el pago, y para elaborar el cumplido.<br><br>";
                                 echo $lista_cuentas;
                             }else{
                                 echo "<input type='hidden' name='cta_id' value='".$cod_cta."'>";
-                                        
+                                
                             }
                         ?>
                                 </td>
@@ -222,6 +242,7 @@ class html_adminCumplidoContratista {
                                 <td colspan='2' rowspan='1'>
                                     <br>
                                         <input type='hidden' name='cod_contrato' value='<? echo $cod_contrato?>'>
+                                        <input type='hidden' name='saldo_contrato' value='<? echo $saldo_contrato;?>'>
                                         <input type='hidden' name='mes_cumplido' value='<? echo $anio_cumplido.$mes_cumplido?>'>
                                         <input type='hidden' name='vigencia_contrato' value='<? echo $vigencia_contrato?>'>
                                         <input type='hidden' name='finicial_cumplido' value='<? echo $finicial_per?>'>
@@ -233,7 +254,13 @@ class html_adminCumplidoContratista {
                                         <input type='hidden' name='arp' value='<? echo $arp?>'>
                                         <input type='hidden' name='afc' value='<? echo $afc?>'>
                                         <input type='hidden' name='nov_id_afc' value='<? echo $nov_id_afc?>'>
+                                        <input type='hidden' name='cooperativas_depositos' value='<? echo $cooperativas_depositos?>'>
+                                        <input type='hidden' name='nov_id_cooperativas_depositos' value='<? echo $nov_id_cooperativas?>'>
                                         <input type='hidden' name='cod_supervisor' value='<? echo $cod_supervisor?>'>
+                                        <input type='hidden' name='declarante' value='<? echo $declarante?>'>
+                                        <input type='hidden' name='regimen_comun' value='<? echo $regimen_comun?>'>
+                                        <input type='hidden' name='pensionado' value='<? echo $pensionado?>'>
+                                        <input type='hidden' name='pasante' value='<? echo $pasante?>'>
                                         <input type='hidden' name='action' value='nom_admin_cumplido_contratista'>
                                         <input type='hidden' name='opcion' value='nuevo'>
                                         <input value="Registrar Solicitud" name="aceptar" tabindex="<?= $tab++ ?>" type="button" onclick="if(<?= $this->verificar; ?>){document.forms['<? echo $this->formulario?>'].submit()}else{false}">
@@ -262,6 +289,7 @@ class html_adminCumplidoContratista {
             $fecha_fin=(isset($datos_contrato[0]['FECHA_FINAL'])?$datos_contrato[0]['FECHA_FINAL']:'');
             $valor_contrato=(isset($datos_contrato[0]['CUANTIA'])?$datos_contrato[0]['CUANTIA']:'');
             $duracion = (isset($datos_contrato[0]['PLAZO_EJECUCION'])?$datos_contrato[0]['PLAZO_EJECUCION']:'');
+            $duracion .= (isset($datos_contrato[0]['DIAS_CONTRATO'])?' ('.$datos_contrato[0]['DIAS_CONTRATO'].' días)':'');
             $objeto= (isset($datos_contrato[0]['OBJETO'])?$datos_contrato[0]['OBJETO']:'');
             $tipo_contrato= (isset($tipo_contrato)?$tipo_contrato:'');
             $estilo_finicio = "";
@@ -552,7 +580,7 @@ class html_adminCumplidoContratista {
                                         default:
                                             $descripcion=(isset($datos_novedad[$key]['descripcion_nov'])?$datos_novedad[$key]['descripcion_nov']:'');
                                             if($valor){
-                                                $descripcion.="<br>VALOR: $".number_format($valor,2);
+                                                $descripcion.="<br>VALOR: ".number_format($valor,2);
                                             }
                                             break;
                                     }
@@ -632,7 +660,7 @@ class html_adminCumplidoContratista {
                                                                         
                                                                         $estado= (isset($registro[$key]['estado'])?$registro[$key]['estado']:'');
                                                                         //var_dump($registro);exit;
-                                                                        if($estado=='APROBADO'){
+                                                                        if($estado=='APROBADO' || $estado=='PROCESADO_SUP' || $estado=='PROCESADO_ORD'){
                                                                             $enlace_cumplido= $this->generarEnlaceCumplido($id,$cedula,$datos_documento);
                                                                             $periodo_pago=$finicio_per." a ".$ffinal_per;
                                                                         }else{
@@ -676,7 +704,7 @@ class html_adminCumplidoContratista {
          */
         function generarEnlaceCumplido($id,$cedula,$tipo_documento){
                 $archivo=$this->configuracion["host"] . $this->configuracion["site"] .$tipo_documento[0]['ubicacion'].$tipo_documento[0]['nombre_pdf'].$cedula."_".$id.".pdf";
-                $enlace ="<a href='".$archivo."' ><img width='26' heigth='26' src='".$this->configuracion["host"].$this->configuracion["site"].$this->configuracion["grafico"]."/pdf_logo.jpg' alt='Editar este registro' title='Ver cumplido' border='0' />&nbsp;<br>Ver cumplido</a>";
+                $enlace ="<a href='".$archivo."' ><img width='26' heigth='26' src='".$this->configuracion["host"].$this->configuracion["site"].$this->configuracion["grafico"]."/pdf_logo.jpg' alt='Ver cumplido' title='Ver cumplido' border='0' />&nbsp;<br>Ver cumplido</a>";
        
             return $enlace;
             
@@ -696,7 +724,7 @@ class html_adminCumplidoContratista {
      * Funcion que muestra un mensaje de verificacion de datos
      */
     function mostrarMensajeVerificacion(){
-        echo "<p class='fondoImportante'>Por favor verifique los datos que se encuentran registrados en el sistema, tenga en cuenta que estos son los que se van a tener en cuenta para elaborar el cumplido y realizar la solicitud de pago.</p>";
+        echo "<p class='fondoImportante'>Por favor verifique los datos y las Novedades que se encuentran registrados en el sistema, tenga en cuenta que estos son los que se van a tener en cuenta para elaborar el cumplido y realizar la solicitud de pago.</p>";
     }
     
 }

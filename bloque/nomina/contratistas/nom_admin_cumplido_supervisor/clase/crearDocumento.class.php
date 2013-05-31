@@ -133,11 +133,13 @@ class crearDocumento  extends funcionGeneral{
         * @return <array> 
         */
        function reemplazarParametrosEnSql($parametros,$parametro_sql){
+           //var_dump($parametros);exit;
            foreach ($parametros as $key => $parametro) {
                $cadena = $parametro['sentencia_sql'];
                if($cadena){
                     foreach ($parametro_sql as $key2 => $value) {
-                        if($key2 && $value){
+                        if($key2){
+                        //if($key2 && $value !=''){
                                 $nombre_parametro = "P[".$key2."]";
                                 $valor_parametro = "'".$value."'";
                                 $parametros[$key]['sentencia_sql']=$this->reemplazarParametroEnCadena($cadena,$nombre_parametro,$valor_parametro);
@@ -211,9 +213,10 @@ class crearDocumento  extends funcionGeneral{
                             $valor_parametro = "$".number_format($parametro['valor'],2);
 
                     }else{ 
-                            $valor_parametro = $parametro['valor'];
+                            $valor_parametro = (isset($parametro['valor'])?$parametro['valor']:'');
                     }
-                    if($parametro['nombre'] && $valor_parametro){
+                    if($parametro['nombre'] ){
+                    //if($parametro['nombre'] && $valor_parametro){
                             foreach ($secciones as $key2 => $value) {
                                     $cadena=$value['contenido'];
                                     $secciones[$key2]['contenido']=$this->reemplazarParametroEnCadena($cadena,$nombre_parametro,$valor_parametro);
@@ -306,7 +309,8 @@ class crearDocumento  extends funcionGeneral{
                                 $cadena_sql.=" par_dbms         AS dbms";
                                 $cadena_sql.=" FROM fn_nom_documento_parametro ";
                                 $cadena_sql.=" INNER JOIN fn_nom_parametro ON pad_id_parametro=par_id";
-                                $cadena_sql.=" WHERE pad_estado='A'";
+                                $cadena_sql.=" WHERE pad_id_documento=".$variable;
+                                $cadena_sql.=" AND pad_estado='A'";
                                 $cadena_sql.=" AND par_estado='A'";
                                 break;
                         

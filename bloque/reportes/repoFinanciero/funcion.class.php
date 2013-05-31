@@ -43,7 +43,8 @@ class funciones_reporteFinanciero extends funcionGeneral
 		$this->acceso_db = $this->conectarDB($configuracion,"mysqlFrame");
 
 		//Conexion SICAPITAL
-		$this->acceso_sic = $this->conectarDB($configuracion,"oracleSIC");
+		//$this->acceso_sic = $this->conectarDB($configuracion,"oracleSIC");
+
 	 
 		//Datos de sesion
                 $this->usuario = $this->rescatarValorSesion($configuracion, $this->acceso_db, "id_usuario");
@@ -104,11 +105,15 @@ class funciones_reporteFinanciero extends funcionGeneral
                             { $parametroRep=array();
                               foreach($parametrosSQL as $key=>$value) 
                                     { //echo $parametrosSQL[$key]['nombre_par']."<br>";
+                                      $parametroRep[$key]['id_reporte']=$parametrosSQL[$key]['id_rep'];
                                       $parametroRep[$key]['reporte']=$parametrosSQL[$key]['rep_nom'];
+                                      $parametroRep[$key]['pagina'] = $reporte['pagina'];
                                       $parametroRep[$key]['titulo']=$parametrosSQL[$key]['rep_titulo'];
+                                      $parametroRep[$key]['id_parametro']=$parametrosSQL[$key]['id_par'];
                                       $parametroRep[$key]['nombre']=$parametrosSQL[$key]['nombre_par'];
                                       $parametroRep[$key]['caja_html']=$parametrosSQL[$key]['caja_html'];
                                       $parametroRep[$key]['actualiza']=$parametrosSQL[$key]['alimenta_par'];
+                                      $parametroRep[$key]['enviar']=$parametrosSQL[$key]['envia_par'];
 
 
                                       //verifica los parametros de control para ejecutar la consulta sql 

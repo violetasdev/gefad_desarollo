@@ -381,13 +381,30 @@ class html_adminCumplidoSupervisor {
                 }else{
                     $vigencia = "";
                 }
-		?><table width="80%" align="center" border="0" cellpadding="10" cellspacing="0" >
+		?>
+                <link rel="stylesheet" href="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/css/jPages.css">
+
+                        <script type="text/javascript" src="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/js/jquery-1.8.2.min.js"></script>
+                        <script src="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/js/jPages.js"></script>
+
+                        <script>
+                        $(function (){
+                            $("div.holder").jPages({
+                            containerID : "contratistas",
+                            previous : "←",
+                            next : "→",
+                            perPage : <? echo $configuracion["registro"]?>,
+                            delay : 20
+                            });
+                        });
+                        </script>
+                        <table width="80%" align="center" border="0" cellpadding="10" cellspacing="0" >
 			<tbody>
 				<tr>
 					<td >
 						<table class="bordered" width="100%" border="0" align="center" cellpadding="5 px" cellspacing="1px" >
 							<tr class="texto_subtitulo">
-								<th >Solicitud(es) de Cumplido(s)
+								<th >Cumplido(s)
 								</th>
 							</tr>
 							<tr>
@@ -402,7 +419,9 @@ class html_adminCumplidoSupervisor {
                                                                                         <th width="20%">Estado</th>
                                                                                         <th width="10%">Opciones</th>
                                                                                         
-										</tr><?
+										</tr>
+                                                                                <tbody id="contratistas">
+                                                                                    <?
                                                                                 
                                                          foreach ($registro as $key => $value)
                                                                 {                                                                                                         
@@ -419,7 +438,7 @@ class html_adminCumplidoSupervisor {
                                                                         
                                                                         $estado= (isset($registro[$key]['estado'])?$registro[$key]['estado']:'');
                                                                         //var_dump($registro);exit;
-                                                                        if($estado=='APROBADO'){
+                                                                        if($estado=='APROBADO' || $estado=='PROCESADO_SUP' || $estado=='PROCESADO_ORD'){
                                                                             $enlace_cumplido= $this->generarEnlaceCumplido($id,$cedula,$datos_documento);
                                                                             $periodo_pago=$finicio_per." a ".$ffinal_per;
                                                                         }else{
@@ -440,8 +459,9 @@ class html_adminCumplidoSupervisor {
 										</tr>";
 					
 								}//fin for 
-								?>
+								?></tbody>
 									</table>
+                                                                    <center><div class="holder"></div></center>
 								</td>
 							</tr>
 						</table>
@@ -528,9 +548,10 @@ class html_adminCumplidoSupervisor {
 										<tr class='cuadro_color'>
                                                                                         <th width="5%">Vigencia</th>
 											<th width="5%">N&uacute;mero de Contrato </th>
-                                                                                        <th width="10%">Fecha inicio Contrato </th>
-                                                                                        <th width="10%">Fecha finalizaci&oacute;n Contrato </th>
+                                                                                        <th width="5%">Fecha inicio Contrato </th>
+                                                                                        <th width="5%">Fecha finalizaci&oacute;n Contrato </th>
                                                                                         <th width="35%">Contratista </th>
+                                                                                        <th width="10%">Saldo Contrato ($)</th>
                                                                                         <th width="5%">Fecha inicio Pago </th>
                                                                                         <th width="5%">Fecha finalizaci&oacute;n Pago </th>
                                                                                         <th width="5%">Cantidad d&iacute;as Pago </th>
@@ -539,6 +560,7 @@ class html_adminCumplidoSupervisor {
                                                                                         <th width="10%">SALUD ($)</th>
                                                                                         <th width="10%">PENSION ($)</th>
                                                                                         <th width="10%">ARP ($)</th>
+                                                                                        <th width="10%">Cooperativas y Depositos ($)</th>
                                                                                         <th><input name="checktodos" type="checkbox" /></th>
                                                                                         
 										</tr>
@@ -550,7 +572,7 @@ class html_adminCumplidoSupervisor {
                                                                                                         $id = (isset($registro[$key]['id'])?$registro[$key]['id']:'');
                                                                                                         $vigencia = (isset($registro[$key]['vigencia'])?$registro[$key]['vigencia']:'');
                                                                                                         $num_contrato = (isset($registro[$key]['num_contrato'])?$registro[$key]['num_contrato']:'');
-                                                                                                        $valor_contrato = (isset($registro[$key]['valor_contrato'])?$registro[$key]['valor_contrato']:'');
+                                                                                                        $saldo_contrato = (isset($registro[$key]['saldo_antes_pago'])?$registro[$key]['saldo_antes_pago']:'');
                                                                                                         $mes = (isset($registro[$key]['mes'])?$registro[$key]['mes']:'');
                                                                                                         $anio= (isset($registro[$key]['anio'])?$registro[$key]['anio']:'');
                                                                                                         $fecha = (isset($registro[$key]['fecha'])?$registro[$key]['fecha']:'');
@@ -570,6 +592,8 @@ class html_adminCumplidoSupervisor {
                                                                                                         $valor_salud =  (isset($registro[$key]['salud'])?$registro[$key]['salud']:'');
                                                                                                         $valor_pension =  (isset($registro[$key]['pension'])?$registro[$key]['pension']:'');
                                                                                                         $valor_arp =  (isset($registro[$key]['arp'])?$registro[$key]['arp']:'');
+                                                                                                        $valor_cooperativas_depositos =  (isset($registro[$key]['cooperativas_depositos'])?$registro[$key]['cooperativas_depositos']:'');
+                                                                                                        $acumulado_antes_pago =  (isset($registro[$key]['acumulado_antes_pago'])?$registro[$key]['acumulado_antes_pago']:'');
                                                                                                         
                                                                                                         echo "	<tr> 
                                                                                                                         <td class='texto_elegante estilo_td'>".$vigencia."</td>    
@@ -577,6 +601,7 @@ class html_adminCumplidoSupervisor {
                                                                                                                         <td class='texto_elegante estilo_td'>".$finicio_contrato."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$ffinal_contrato."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$contratista."</td>    
+                                                                                                                        <td class='texto_elegante estilo_td'>".$saldo_contrato."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$finicio_cumplido."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$ffinal_cumplido."</td>   
                                                                                                                         <td class='texto_elegante estilo_td'>".$dias_cumplido."</td>   
@@ -585,11 +610,14 @@ class html_adminCumplidoSupervisor {
                                                                                                                         <input type='hidden' name='dias_cumplido_".$key."' value='".$dias_cumplido."'>
                                                                                                                         <input type='hidden' name='finicio_cumplido_".$key."' value='".$finicio_cumplido."'>
                                                                                                                         <input type='hidden' name='ffinal_cumplido_".$key."' value='".$ffinal_cumplido."'>
+                                                                                                                        <input type='hidden' name='acumulado_antes_pago_".$key."' value='".$acumulado_antes_pago."'>
+                                                                                                                            
                                                                                                                         <td class='texto_elegante estilo_td'><input name='valor_cumplido_".$key."' type='text' size='8' maxlength='9'  onKeyPress='return solo_numero_sin_slash(event)' value='".$valor_temporal."' readonly/></td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$valor_afc."</td>   
                                                                                                                         <td class='texto_elegante estilo_td'>".$valor_salud."</td>   
                                                                                                                         <td class='texto_elegante estilo_td'>".$valor_pension."</td>   
-                                                                                                                        <td class='texto_elegante estilo_td'>".$valor_arp."</td>   
+                                                                                                                        <td class='texto_elegante estilo_td'>".$valor_arp."</td>
+                                                                                                                        <td class='texto_elegante estilo_td'>".$valor_cooperativas_depositos."</td>
                                                                                                                         <td class='texto_elegante estilo_td'><input value='".$id."' name='id_solicitud_".$key."' type='checkbox' /></td>    
                                                                                                                         
 
