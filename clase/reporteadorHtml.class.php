@@ -139,7 +139,7 @@ function mostrarReporte($configuracion,$registro,$nombre,$titulo)
                                                                                                         if (isset($registro[$key][$cabecera[$cab]]) && strtolower(substr($cabecera[$cab],0,5))=='valor')
                                                                                                             {$dato=number_format($registro[$key][$cabecera[$cab]],2, '.', ',');}
                                                                                                         elseif (!isset($registro[$key][$cabecera[$cab]]))
-                                                                                                             {$dato='';}    
+                                                                                                             {$dato='SD';}    
                                                                                                         else{ $dato=$registro[$key][$cabecera[$cab]];}
                                                                                                         echo "&nbsp;".$dato."&nbsp;";
                                                                                                         ?></td><?

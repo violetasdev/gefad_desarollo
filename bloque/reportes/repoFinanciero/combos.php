@@ -47,19 +47,23 @@ class combos_reporteFinanciero extends funcionGeneral
 
 
 	function action()
-	{
+	{ 
             $Vpar=array('reporte'=>$_REQUEST["reporte"],'parametro'=>$_REQUEST["parametro"]);
             $param_sql=$this->cadena_sql("buscarParametrosReporte",$Vpar);
             //rescata los datos del parametro
+            
+            
             $parametrosSQL = $this->ejecutarSQL($this->configuracion, $this->acceso_db, $param_sql, "busqueda");
             $controlSQL = explode("|", $parametrosSQL[0]['control_busqueda']);
-
+           
             foreach($controlSQL as $par=>$value) 
-                { //reemplaza los parametros de la sql, por los valores
+                {
+                    echo $_REQUEST[$controlSQL[$par]];
+                    //reemplaza los parametros de la sql, por los valores
                   if(isset($_REQUEST[$controlSQL[$par]]) && $_REQUEST[$controlSQL[$par]]>0)
                        { //reemplaza los parametros de la consulta
                          $parametrosSQL[0]['sql_par']=str_replace( '$P{\''.$controlSQL[$par].'\'}' ,
-                                              ' = '. $_REQUEST[$controlSQL[$par]],
+                                              ' =\''. $_REQUEST[$controlSQL[$par]].'\'',
                                               $parametrosSQL[0]['sql_par']);
                        }
                   else
@@ -70,7 +74,6 @@ class combos_reporteFinanciero extends funcionGeneral
                         }
 
                 } 
- 
                //crea objeto de conexion del reporte y ejecuta la consulta    
                $accesoParametro = $this->conectarDB($this->configuracion,$parametrosSQL[0]['conexion_par']);
                $parametroDatos = $this->ejecutarSQL($this->configuracion, $accesoParametro, $parametrosSQL[0]['sql_par'], "busqueda");
@@ -81,7 +84,7 @@ class combos_reporteFinanciero extends funcionGeneral
                     { foreach($parametroDatos as $dato=>$value )
                         { $options.= ' <option value="'.$parametroDatos[$dato][0].'">'.$parametroDatos[$dato][1].'</option>'; }
                     }
-                else {$options='No es posible rescatar los datos';}
+                else {$options=' <option value="0">No es posible rescatar los datos</option>';}
                 //imprime las opciones obtenidas
                 echo $options;
 

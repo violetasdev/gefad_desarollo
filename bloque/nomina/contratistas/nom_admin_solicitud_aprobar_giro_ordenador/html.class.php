@@ -251,14 +251,13 @@ class html_adminSolicitudAprobarGiro {
                 $tab=0;
                 $total_registros = count($registro);
 		$_REQUEST['periodo_pago']=(isset($_REQUEST['periodo_pago'])?$_REQUEST['periodo_pago']:'');
-		$this->formulario = "nom_adminSolicitudAprobarGiroOrdenador";
+		$this->formulario = "nom_admin_solicitud_aprobar_giro_ordenador";
 		?>
                 <link rel="stylesheet" href="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/css/jPages.css">
-
-                        <script type="text/javascript" src="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/js/jquery-1.8.2.min.js"></script>
-                        <script src="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/js/jPages.js"></script>
-                        <!-- Script para paginar el listado -->
-                        <script>
+                <!--script type="text/javascript" src="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/js/jquery-1.8.2.min.js"></script-->
+                <script src="<? echo $configuracion["host"].$configuracion["site"].$configuracion["plugins"];?>/jPages-master/js/jPages.js"></script>
+                <!-- Script para paginar el listado -->
+                <script>
                             
                         $(function (){
                             $("div.holder").jPages({
@@ -273,7 +272,6 @@ class html_adminSolicitudAprobarGiro {
                         <!-- Script para seleccionar todos los ckechbox-->
                         <script type="text/javascript">
                             $(document).ready(function(){
-
                                     //Checkbox
                                     $("input[name=checktodos]").change(function(){
                                             $('input[type=checkbox]').each( function() {			
@@ -284,26 +282,23 @@ class html_adminSolicitudAprobarGiro {
                                                     }
                                             });
                                     });
-
                             });
-                            </script>
+                         </script>
                
                 <form enctype='multipart/form-data' method='POST' action='index.php' name='<? echo $this->formulario;?>'>
-                           
-                        
                 <table width="80%" align="center" border="0" cellpadding="10" cellspacing="0" >
 			<tbody>
 				<tr>
 					<td >
 						<table class="bordered" width="100%" border="0" align="center" cellpadding="5 px" cellspacing="1px" >
-							<tr class="texto_subtitulo">
+							<tr class="texto_subtituloPrincipal centrar">
 								<th >Nominas generadas sin autorizaci&oacute;n de giro
 								</th>
 							</tr>
                                                         <tr>
 								<td>
 									<table class="bordered"  width="100%" >
-										<tr class='cuadro_color'>
+										<tr class='encabezado_registro'>
                                                                                         <th width="5%">No. n&oacute;mina</th>
 											<th width="30%">Dependencia</th>
 											<th width="30%">Rubro</th>
@@ -326,7 +321,6 @@ class html_adminSolicitudAprobarGiro {
                                                                                                         $mes = (isset($registro[$key]['nom_mes'])?$registro[$key]['nom_mes']:'');
                                                                                                         $fecha = (isset($registro[$key]['nom_fecha_registro'])?$registro[$key]['nom_fecha_registro']:'');
                                                                                                         $cantidad_contratistas = (isset($registro[$key]['cantidad_registros'])?$registro[$key]['cantidad_registros']:'');
-                                                                                                        
                                                                                                         echo "	<tr> 
                                                                                                                         <td class='texto_elegante estilo_td'>".$id_nomina."</td>    
                                                                                                                         <td class='texto_elegante estilo_td'>".$nombre_dependencia."</td>    
@@ -337,10 +331,7 @@ class html_adminSolicitudAprobarGiro {
                                                                                                                         <td class='texto_elegante estilo_td'>".$cantidad_contratistas."</td>    
                                                                                                                         <input type='hidden' name='vigencia_".$key."' value='".$anio."'>
                                                                                                                         <td class='texto_elegante estilo_td'><input value='".$id_nomina."' name='id_nomina_".$key."' type='checkbox' /></td>    
-                                                                                                                        
-                                                                                                                        
                                                                                                                 </tr>";
-
                                                                                                 }//fin for 
                                                                                         }else{
                                                                                             echo "<tr><td colspan=6>No hay registros de nominas generadas sin solicitudes de aprobacion de giro</td></tr>";
@@ -360,6 +351,7 @@ class html_adminSolicitudAprobarGiro {
                                                                     <br>
                                                                         <input type='hidden' name='pagina' value='nom_adminSolicitudAprobarGiroOrdenador'>
                                                                         <input type='hidden' name='opcion' value='solicitar_aprobacion_giro'>
+                                                                        <input type='hidden' name='action' value='<? echo $this->formulario;?>'>
                                                                         <input type='hidden' name='total_registros' value='<? echo $total_registros;?>'>
                                                                         <input value="Aprobar" name="aceptar" tabindex="<?= $tab++ ?>" type="button" onclick="document.forms['<? echo $this->formulario?>'].submit()">
                                                                 </td>
