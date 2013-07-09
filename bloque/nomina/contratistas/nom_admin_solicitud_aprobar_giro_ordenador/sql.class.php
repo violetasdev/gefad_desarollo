@@ -1007,6 +1007,16 @@ class sql_adminSolicitudAprobarGiro extends sql
                                 $cadena_sql.=" 'T'";
                                 $cadena_sql.=" from OGT.ogt_orden_pago_tmp";
                                 break;
+
+                        case "eliminar_cuentas_orden_pago":
+                                $cadena_sql=" DELETE OGT.OGT_CUENTAS_ORDEN_PAGO";
+                                $cadena_sql.=" WHERE ";
+                                $cadena_sql.=" VIGENCIA= '".$variable['VIGENCIA']."' ";
+                                $cadena_sql.=" AND ENTIDAD= '".$variable['ENTIDAD']."' ";
+                                $cadena_sql.=" AND UNIDAD_EJECUTORA= '".$variable['UNIDAD_EJECUTORA']."' ";
+                                $cadena_sql.=" AND TIPO_DOCUMENTO= '".$variable['TIPO_DOCUMENTO']."' ";
+                                $cadena_sql.=" AND CONSECUTIVO= '".$variable['CONSECUTIVO']."' ";
+                                break;         
                             
                         case "insertar_conceptos_orden_pago":
                                 $cadena_sql=" insert into ";
@@ -1030,19 +1040,36 @@ class sql_adminSolicitudAprobarGiro extends sql
                                 $cadena_sql.=" from OGT.ogt_orden_pago_tmp";
                                 break;
                             
+                        case "eliminar_conceptos_orden_pago":
+                                $cadena_sql=" DELETE OGT.OGT_CONCEPTOS_ORDEN_PAGO";
+                                $cadena_sql.=" WHERE ";
+                                $cadena_sql.=" VIGENCIA= '".$variable['VIGENCIA']."' ";
+                                $cadena_sql.=" AND ENTIDAD= '".$variable['ENTIDAD']."' ";
+                                $cadena_sql.=" AND UNIDAD_EJECUTORA= '".$variable['UNIDAD_EJECUTORA']."' ";
+                                $cadena_sql.=" AND TIPO_DOCUMENTO= '".$variable['TIPO_DOCUMENTO']."' ";
+                                $cadena_sql.=" AND CONSECUTIVO= '".$variable['CONSECUTIVO']."' ";
+                                $cadena_sql.=" AND COTE_ID= '".$variable['COTE_ID']."' ";
+                                break;     
+                            
                         case "vaciar_orden_pago_tmp":
                                 $cadena_sql=" DELETE OGT.ogt_orden_pago_tmp";
+                                $cadena_sql.=" WHERE ";
+                                $cadena_sql.=" USUARIO= '".$variable."' ";
+                            
                                 break;
 
                         case "vaciar_imputacion_tmp":
                                 $cadena_sql=" DELETE OGT.ogt_imputacion_tmp";
+                                $cadena_sql.=" WHERE ";
+                                $cadena_sql.=" USUARIO= '".$variable."' ";
                                 break;
 
                         case "vaciar_detalle_descuento_tmp":
                                 $cadena_sql=" DELETE OGT.ogt_detalle_dscto_tmp";
+                                $cadena_sql.=" WHERE ";
+                                $cadena_sql.=" USUARIO= '".$variable."' ";
                                 break;
 
-                            
                         case "orden_pago_tmp":
                                 $cadena_sql=" SELECT ";
                                 $cadena_sql.=" VIGENCIA,";
@@ -1087,16 +1114,12 @@ class sql_adminSolicitudAprobarGiro extends sql
                                 $cadena_sql=" DELETE OGT.OGT_ORDEN_PAGO";
                                 $cadena_sql.=" WHERE ";
                                 $cadena_sql.=" VIGENCIA='".$variable['VIGENCIA']."'";
+                                $cadena_sql.=" AND VIGENCIA_OP='".$variable['VIGENCIA_PRESUPUESTO']."'";
                                 $cadena_sql.=" AND ENTIDAD='".$variable['ENTIDAD']."'";
                                 $cadena_sql.=" AND UNIDAD_EJECUTORA='".$variable['UNIDAD_EJECUTORA']."'";
                                 $cadena_sql.=" AND TIPO_DOCUMENTO='".$variable['TIPO_DOCUMENTO']."'";
                                 $cadena_sql.=" AND CONSECUTIVO='".$variable['CONSECUTIVO']."'";
-                                $cadena_sql.=" AND TER_ID='".$variable['TER_ID']."'";
-                                $cadena_sql.=" AND DETALLE='".$variable['DETALLE']."'";
-                                $cadena_sql.=" AND FORMA_PAGO='".$variable['FORMA_PAGO']."'";
-                                $cadena_sql.=" AND NUMERO_CUENTA='".$variable['NUMERO_CUENTA']."'";
-                                $cadena_sql.=" AND BANCO='".$variable['BANCO']."'";
-                                $cadena_sql.=" AND CLASE='".$variable['CLASE']."'";
+
                                 
                                 break;
                             
@@ -1123,33 +1146,25 @@ class sql_adminSolicitudAprobarGiro extends sql
                                 $cadena_sql=" DELETE OGT.OGT_IMPUTACION";
                                 $cadena_sql.=" WHERE ";
                                 $cadena_sql.=" VIGENCIA='".$variable['VIGENCIA']."'";
+                                $cadena_sql.=" AND VIGENCIA_PRESUPUESTO='".$variable['VIGENCIA_PRESUPUESTO']."'";
                                 $cadena_sql.=" AND ENTIDAD='".$variable['ENTIDAD']."'";
                                 $cadena_sql.=" AND UNIDAD_EJECUTORA='".$variable['UNIDAD_EJECUTORA']."'";
                                 $cadena_sql.=" AND TIPO_DOCUMENTO='".$variable['TIPO_DOCUMENTO']."'";
                                 $cadena_sql.=" AND CONSECUTIVO='".$variable['CONSECUTIVO']."'";
-                                $cadena_sql.=" AND RUBRO_INTERNO='".$variable['RUBRO_INTERNO']."'";
-                                $cadena_sql.=" AND DISPONIBILIDAD='".$variable['DISPONIBILIDAD']."'";
-                                $cadena_sql.=" AND VALOR_BRUTO='".$variable['VALOR_BRUTO']."'";
-                                $cadena_sql.=" AND ANO_PAC='".$variable['ANO_PAC']."'";
-                                $cadena_sql.=" AND MES_PAC='".$variable['MES_PAC']."'";
-                                $cadena_sql.=" AND REGISTRO='".$variable['REGISTRO']."'";
                                 break;
                          
                         case "eliminar_ogt_registro_presupuestal":
                                 $cadena_sql=" DELETE OGT.OGT_REGISTRO_PRESUPUESTAL";
                                 $cadena_sql.=" WHERE ";
                                 $cadena_sql.=" VIGENCIA= '".$variable['VIGENCIA']."'";
+                                $cadena_sql.=" AND VIGENCIA_PRESUPUESTO='".$variable['VIGENCIA_PRESUPUESTO']."'";
                                 $cadena_sql.=" AND ENTIDAD= '".$variable['ENTIDAD']."'";
                                 $cadena_sql.=" AND UNIDAD_EJECUTORA= '".$variable['UNIDAD_EJECUTORA']."'";
                                 $cadena_sql.=" AND TIPO_DOCUMENTO= '".$variable['TIPO_DOCUMENTO']."'";
                                 $cadena_sql.=" AND CONSECUTIVO= '".$variable['CONSECUTIVO']."'";
-                                $cadena_sql.=" AND RUBRO_INTERNO= '".$variable['RUBRO_INTERNO']."'";
-                                $cadena_sql.=" AND DISPONIBILIDAD= '".$variable['DISPONIBILIDAD']."'";
-                                $cadena_sql.=" AND REGISTRO= '".$variable['REGISTRO']."'";
-                                $cadena_sql.=" AND VALOR_REGISTRO= '".$variable['VALOR_REGISTRO']."'";
                                 break;
                         
-                            case "exogena_de_tmp":
+                        case "exogena_de_tmp":
                                 $cadena_sql=" SELECT ";
                                 $cadena_sql.=" IP.VIGENCIA,";
                                 $cadena_sql.=" IP.ENTIDAD,";
@@ -1198,40 +1213,22 @@ class sql_adminSolicitudAprobarGiro extends sql
                                 $cadena_sql=" DELETE OGT.OGT_INFORMACION_EXOGENA ";
                                 $cadena_sql.=" WHERE ";
                                 $cadena_sql.=" VIGENCIA='".$variable['VIGENCIA']."'";
-                                $cadena_sql.=" AND VIGENCIA_PRESUPUESTO='".$variable['VIGENCIA']."'";
+                                $cadena_sql.=" AND VIGENCIA_PRESUPUESTO='".$variable['VIGENCIA_PRESUPUESTO']."'";
                                 $cadena_sql.=" AND ENTIDAD='".$variable['ENTIDAD']."'";
                                 $cadena_sql.=" AND UNIDAD_EJECUTORA='".$variable['UNIDAD_EJECUTORA']."'";
                                 $cadena_sql.=" AND TIPO_DOCUMENTO='".$variable['TIPO_DOCUMENTO']."'";
                                 $cadena_sql.=" AND CONSECUTIVO='".$variable['CONSECUTIVO']."'";
-                                $cadena_sql.=" AND TIPO_DOCUMENTO_IE='".$variable['TIPO_DOCUMENTO_IE']."'";
-                                $cadena_sql.=" AND NUMERO_DOCUMENTO='".$variable['NUMERO_DOCUMENTO']."'";
-                                $cadena_sql.=" AND RUBRO_INTERNO='".$variable['RUBRO_INTERNO']."'";
-                                $cadena_sql.=" AND DISPONIBILIDAD='".$variable['DISPONIBILIDAD']."'";
-                                $cadena_sql.=" AND REGISTRO='".$variable['REGISTRO']."'";
-                                $cadena_sql.=" AND TER_ID='".$variable['TER_ID']."'";
-                                $cadena_sql.=" AND TO_CHAR(FECHA,'DD-MM-YYYY') = TO_CHAR(SYSDATE,'DD-MM-YYYY')";
-                                $cadena_sql.=" AND FORMA_PAGO='".$variable['FORMA_PAGO']."'";
-                                $cadena_sql.=" AND NUMERO_CUENTA='".$variable['NUMERO_CUENTA']."'";
-                                $cadena_sql.=" AND BANCO='".$variable['BANCO']."'";
-                                $cadena_sql.=" AND CLASE='".$variable['CLASE']."'";
-                                $cadena_sql.=" AND VALOR_BRUTO='".$variable['VALOR_BRUTO']."'";
                                 break;
                         
                          case "eliminar_detalle_descuento":
                                 $cadena_sql=" DELETE OGT.OGT_DETALLE_DESCUENTO ";
                                 $cadena_sql.=" WHERE ";
                                 $cadena_sql.=" VIGENCIA='".$variable['VIGENCIA']."'";
+                                $cadena_sql.=" AND VIGENCIA_PRESUPUESTO='".$variable['VIGENCIA_PRESUPUESTO']."'";
                                 $cadena_sql.=" AND ENTIDAD='".$variable['ENTIDAD']."'";
                                 $cadena_sql.=" AND UNIDAD_EJECUTORA='".$variable['UNIDAD_EJECUTORA']."'";
                                 $cadena_sql.=" AND TIPO_DOCUMENTO='".$variable['TIPO_DOCUMENTO']."'";
                                 $cadena_sql.=" AND CONSECUTIVO='".$variable['CONSECUTIVO']."'";
-                                $cadena_sql.=" AND RUBRO_INTERNO='".$variable['RUBRO_INTERNO']."'";
-                                $cadena_sql.=" AND DISPONIBILIDAD='".$variable['DISPONIBILIDAD']."'";
-                                $cadena_sql.=" AND REGISTRO='".$variable['REGISTRO']."'";
-                                $cadena_sql.=" AND NUMERO_DOCUMENTO='".$variable['NUMERO_DOCUMENTO']."'";
-                                $cadena_sql.=" AND CODIGO_INTERNO='".$variable['CODIGO_INTERNO']."'";
-                                $cadena_sql.=" AND VALOR_BASE_RETENCION='".$variable['VALOR_BASE_RETENCION']."'";
-                                $cadena_sql.=" AND VALOR_DESCUENTO='".$variable['VALOR_DESCUENTO']."'";
                                 break;
                         
                         case "detalle_descuento_tmp":

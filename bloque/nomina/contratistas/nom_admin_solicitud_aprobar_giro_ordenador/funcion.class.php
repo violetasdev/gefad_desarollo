@@ -36,118 +36,77 @@ class funciones_adminSolicitudAprobarGiro extends funcionGeneral
 		$this->log_us = new log();
 		$this->tema = $tema;
 		$this->sql = $sql;
-		
 		//Conexion General
 		$this->acceso_db = $this->conectarDB($configuracion,"mysqlFrame");
-                
                 //Conexion SICAPITAL
 		$this->acceso_sic = $this->conectarDB($configuracion,"oracleSIC");
-                
                 //Conexion NOMINA 
 		$this->acceso_nomina = $this->conectarDB($configuracion,"nominapg");
-               
 		//Datos de sesion
-		
 		$this->usuario = $this->rescatarValorSesion($configuracion, $this->acceso_db, "id_usuario");
 		$this->identificacion = $this->rescatarValorSesion($configuracion, $this->acceso_db, "identificacion");
-		
                 $this->configuracion = $configuracion;
-                
                 $this->htmlNomina = new html_adminSolicitudAprobarGiro($configuracion);   
-                
 	}
 	
-	
 	function nuevoRegistro($configuracion,$tema,$acceso_db)
-	{
-            $registro = (isset($registro)?$registro:'');
-            $this->form_usuario($configuracion,$registro,$this->tema,"");
-		
+	{  $registro = (isset($registro)?$registro:'');
+           $this->form_usuario($configuracion,$registro,$this->tema,"");
 	}
 	
    	function editarRegistro($configuracion,$tema,$id,$acceso_db,$formulario)
-   	{						
-		$this->cadena_sql = $this->sql->cadena_sql($configuracion,$this->acceso_db,"usuario",$id);
-                
-		$registro = $this->acceso_db->ejecutarAcceso($this->cadena_sql,"busqueda");
+   	{	$this->cadena_sql = $this->sql->cadena_sql($configuracion,$this->acceso_db,"usuario",$id);
+         	$registro = $this->acceso_db->ejecutarAcceso($this->cadena_sql,"busqueda");
 		if ($_REQUEST['opcion'] == 'cambiar_clave')
-		{
-		$this->formContrasena($configuracion,$registro,$this->tema,'');
-		}
+                    {$this->formContrasena($configuracion,$registro,$this->tema,'');}
 		else
-		{
-		$this->form_usuario($configuracion,$registro,$this->tema,'');
-		}
+                    {$this->form_usuario($configuracion,$registro,$this->tema,'');}
 	}
-   	
    	function corregirRegistro()
-    	{
-	}
-	
+            {	}
 	function listaRegistro($configuracion,$id_registro)
-	
-    	{	
-	}
-		
-
+            {	}
 	function mostrarRegistro($configuracion,$registro, $totalRegistros, $opcion, $variable)
-    	{	
-		switch($opcion)
-		{
-			case "multiplesSolicitudesPago":
-                                $datos_documento = $this->consultarDocumento(2);
-            			$this->htmlNomina->multiplesSolicitudesPago($configuracion,$registro,$datos_documento);
-				break;
-		
+    	{ switch($opcion)
+		{   case "multiplesSolicitudesPago":
+                          $datos_documento = $this->consultarDocumento(2);
+            	 	  $this->htmlNomina->multiplesSolicitudesPago($configuracion,$registro,$datos_documento);
+	   	    break;
 		}
-		
 	}
-	
-		
 /*__________________________________________________________________________________________________
-		
 						Metodos especificos 
 __________________________________________________________________________________________________*/
-
-    
-    
     /**
      * Funcion para listar las nominas generadas y seleccionarlas para solicitar la aprobacion de giro
      */
-    function revisarNominasGeneradas(){
-          
-        $nominas = $this->consultarNominasGeneradasSinSolicitudGiro($this->identificacion);
-        $dependencias= $this->consultarDependencias();
-        if(is_array($nominas)){
-                foreach ($nominas as $key => $nomina) {
-                    //completamos la informacion 
-                    $cod_dependencia = $nomina['nom_cod_dep_supervisor'];
-                    $dependencia= $this->consultarNombreDependencia($dependencias,$cod_dependencia);
-                    $nominas[$key]['nombre_dependencia'] = $dependencia;
-                    $cod_rubro = $nomina['nom_rubro_interno'];
-                    $vigencia = $nomina['nom_anio'];
-                    $rubro = $this->consultarRubro($vigencia,$cod_rubro);
-                    $nominas[$key]['nombre_rubro'] = $rubro[0]['NOMBRE_RUBRO'];
-                }   
-            }
-            
-            $this->htmlNomina->form_solicitar_giro($this->configuracion, $nominas);
+    function revisarNominasGeneradas()
+        {   $nominas = $this->consultarNominasGeneradasSinSolicitudGiro($this->identificacion);
+            $dependencias= $this->consultarDependencias();
+            if(is_array($nominas)){
+                    foreach ($nominas as $key => $nomina) {
+                        //completamos la informacion 
+                        $cod_dependencia = $nomina['nom_cod_dep_supervisor'];
+                        $dependencia= $this->consultarNombreDependencia($dependencias,$cod_dependencia);
+                        $nominas[$key]['nombre_dependencia'] = $dependencia;
+                        $cod_rubro = $nomina['nom_rubro_interno'];
+                        $vigencia = $nomina['nom_anio'];
+                        $rubro = $this->consultarRubro($vigencia,$cod_rubro);
+                        $nominas[$key]['nombre_rubro'] = $rubro[0]['NOMBRE_RUBRO'];
+                    }   
+                }
+           $this->htmlNomina->form_solicitar_giro($this->configuracion, $nominas);
         }
-    
-          /**
+       /**
        * Funcion para consultar las nominas generadas relacionados a un ordenador
        * @param int $id_supervisor
        * @return <array> 
        */
-        function consultarNominasGeneradasSinSolicitudGiro($id_ordenador){
-            
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"nominas_generadas_sin_solicitud_giro",$id_ordenador);
-            //echo "<br>cadena ".$cadena_sql;
-            return $resultado= $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
-	
-    }
-  
-    
+        function consultarNominasGeneradasSinSolicitudGiro($id_ordenador)
+            {$cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"nominas_generadas_sin_solicitud_giro",$id_ordenador);
+             //echo "<br>cadena ".$cadena_sql;
+             return $resultado= $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
+            }
      /**
      * Funcion para consultar las dependencias registradas en SICAPITAL
      * @return type 
@@ -158,8 +117,6 @@ ________________________________________________________________________________
            return $resultado;
 
     }
-    
-      
     /**
      * Funcion que consulta el nombre de una dependencia a partir de un arreglo que contiene los datos
      *
@@ -177,15 +134,150 @@ ________________________________________________________________________________
         return $nombre;
     }
     
-      
-          
+/**
+     * revisa las nominas generadas y seleccionadas para realizar el correspondiente registro en la base de datos con la solicitud de giro
+     */
+    function revisarSolicitudAprobacionGiro($ordenes_aprobados){
+        var_dump($ordenes_aprobados);
+        
+        
+        foreach ($ordenes_aprobados as $key => $value) {
+            
+            echo "<br> ".$key." ".$ordenes_aprobados[$key]['vigencia']." ".$ordenes_aprobados[$key]['id_nomina'];
+                
+        }
+        
+       // $this->hacerRollback();
+        //exit;
+        
+        $aprobados=0;
+        $mensaje="";
+        $total = (isset($_REQUEST['total_registros'])?$_REQUEST['total_registros']:0);
+        
+        
+        if(!empty($ordenes_aprobados)){
+              
+              
+           echo "si paso";exit;
+                $indice=0;
+                $num_op_uni_uno = $this->obtenerNumeroOrdenPago('01');
+                $num_op_uni_dos = $this->obtenerNumeroOrdenPago('02');
+//                $num_op_uni_uno = 100;
+//                $num_op_uni_dos = 50;
+                $conceptos_nomina = $this->consultarConceptosCuentasNomina();
+                
+                //buscamos y almacenamos en un arreglo los cumplidos seleccionados para la solicitud de pago
+        foreach ($ordenes_aprobados as $key => $value)
+                {
+                            $valido=0;
+                            $nombre = "id_nomina_".$i;
+                            $nombre_vigencia = "vigencia_".$i;
+                            $_REQUEST[$nombre]=(isset($_REQUEST[$nombre])?$_REQUEST[$nombre]:'');
+                            $_REQUEST[$nombre_vigencia]=(isset($_REQUEST[$nombre_vigencia])?$_REQUEST[$nombre_vigencia]:'');
+                            if($_REQUEST[$nombre])
+                                {
+                                    $id_solicitud = $this->consultarUltimoNumeroSolicitudGiro()+1;
+                                    $id_nomina=$_REQUEST[$nombre];
+                                    $vigencia= $_REQUEST[$nombre_vigencia];
+                                    $detalles = $this->consultarDetallesNomina($id_nomina);
+                                    $detalles = $this->asignarDatosContratoDetalle($detalles);
+                                    //var_dump($detalles);
+                                    $this->vaciarTablasTemporales($this->identificacion);
+                                    foreach ($detalles as $detalle) 
+                                        {   //ejecutar proceso para archivo tmp de ordenes de pago
+                                            if($detalle['cto_uni_ejecutora']=='01'){
+                                                $num_op_uni_uno++;
+                                                $num_op=$num_op_uni_uno;
+
+                                            }elseif($detalle['cto_uni_ejecutora']=='02'){
+                                                $num_op_uni_dos++;
+                                                $num_op=$num_op_uni_dos;
+                                            }
+                                            $cuentas = $this->buscarConceptosCuentasPorUnidad($conceptos_nomina,$detalle['cto_uni_ejecutora']);
+                                            $datos_concepto = $this->buscarConcepto($cuentas,$detalle['aci_cno_codigo']);
+                                            $temporales = $this->registrarTablasTmp($detalle,$num_op,$datos_concepto);
+                                            if(!$temporales){
+                                                break;
+                                            }
+                                            //exit;
+                                        }
+                                    if($temporales)
+                                         {  $actualizaciones = $this->actualizarCampos();
+                                            //exit;
+                                            if($actualizaciones==1){
+                                                    $tablas_finales = $this->cargaTablasFinales();
+                                            }
+                                            if($tablas_finales){
+                                                    if($detalle['cto_uni_ejecutora']=='01'){
+                                                        $num_op_uni_uno++;
+
+                                                    }elseif($detalle['cto_uni_ejecutora']=='02'){
+                                                        $num_op_uni_dos++;
+                                                    }
+                                                    $valido=1;
+                                            }else{
+                                                    $valido=0;
+                                            }
+                                         }
+                                     else{  $valido=0;
+                                            echo "error al intentar cargar tablas temporales";
+                                            break;
+                                         }
+                            }
+                            if(!$valido){
+                                echo "<br>Error al verificar una nomina";
+                                $this->hacerRollback();
+                                break;
+                            }
+
+                        }
+                
+                //                                $id_detalle=$detalle['dtn_id'];
+    //                                $existe_solicitud = $this->consultarDatosSolicitudGiro("",$id_nomina,$id_detalle);
+    //                                if(!$existe_solicitud[0][0]){
+    //                                        $insertado = $this->insertarSolicitudGiro($id_solicitud,$id_nomina,$id_detalle);
+    //                                        if($insertado){
+    //                                                //VARIABLES PARA EL LOG
+    //                                                $registro[0] = "INSERTAR";
+    //                                                $registro[1] = $id_solicitud;
+    //                                                $registro[2] = "SOLICITUD_GIRO_ORDENADOR";
+    //                                                $registro[3] = $id_solicitud;
+    //                                                $registro[4] = time();
+    //                                                $registro[5] = "Insertar solicitud de aprobacion de giro ". $id_solicitud;
+    //                                                $registro[5] .= " - id_nomina =". $id_nomina;
+    //                                                $registro[5] .= " - id_detalle =". $id_detalle;
+    //                                                $registro[5] .= " - vigencia =". $vigencia;
+    //                                                $this->log_us->log_usuario($registro,$this->configuracion);
+    //                                                $aprobados++;
+    //
+    //                                        }   
+    //                                
+    //                                        $mensaje .= "Solicitud No. ".$id_solicitud." registrada exitosamente - Nomina No. ".$id_nomina;
+    //
+    //                                }else{
+    //                                    $mensaje .=  "Ya se encuentra registrada la solicitud de giro para el detalle ".$id_detalle." de la nomina ".$id_nomina;
+    //                                }
+              
+        }
+
+        $pagina=$this->configuracion["host"].$this->configuracion["site"]."/index.php?";
+        $variable="pagina=nom_adminSolicitudAprobarGiroOrdenador";
+        $variable.="&opcion=revisarNominasGeneradas";
+
+        $variable=$this->cripto->codificar_url($variable,$this->configuracion);
+        $this->retornar($pagina,$variable,$mensaje);
+ 
+        
+    }
+    
      /**
      * revisa las nominas generadas y seleccionadas para realizar el correspondiente registro en la base de datos con la solicitud de giro
      */
-    function revisarSolicitudAprobacionGiro(){
-        //var_dump($_REQUEST);exit;
-        $this->hacerRollback();
-        exit;
+    function revisarSolicitudAprobacionGiroOLD_jlh($aprobados){
+        var_dump($_REQUEST);exit;
+       // $this->hacerRollback();
+        //exit;
+        
         $aprobados=0;
         $mensaje="";
         $total = (isset($_REQUEST['total_registros'])?$_REQUEST['total_registros']:0);
@@ -196,6 +288,7 @@ ________________________________________________________________________________
 //                $num_op_uni_uno = 100;
 //                $num_op_uni_dos = 50;
                 $conceptos_nomina = $this->consultarConceptosCuentasNomina();
+                
                 //buscamos y almacenamos en un arreglo los cumplidos seleccionados para la solicitud de pago
                 for($i=0;$i<$total;$i++){
                     $valido=0;
@@ -203,17 +296,17 @@ ________________________________________________________________________________
                     $nombre_vigencia = "vigencia_".$i;
                     $_REQUEST[$nombre]=(isset($_REQUEST[$nombre])?$_REQUEST[$nombre]:'');
                     $_REQUEST[$nombre_vigencia]=(isset($_REQUEST[$nombre_vigencia])?$_REQUEST[$nombre_vigencia]:'');
-                    
-                    if($_REQUEST[$nombre]){
+                    if($_REQUEST[$nombre])
+                        {
                             $id_solicitud = $this->consultarUltimoNumeroSolicitudGiro()+1;
                             $id_nomina=$_REQUEST[$nombre];
                             $vigencia= $_REQUEST[$nombre_vigencia];
                             $detalles = $this->consultarDetallesNomina($id_nomina);
                             $detalles = $this->asignarDatosContratoDetalle($detalles);
                             //var_dump($detalles);
-                            $this->vaciarTablasTemporales();
-                            foreach ($detalles as $detalle) {
-                                    //ejecutar proceso para archivo tmp de ordenes de pago
+                            $this->vaciarTablasTemporales($this->identificacion);
+                            foreach ($detalles as $detalle) 
+                                {   //ejecutar proceso para archivo tmp de ordenes de pago
                                     if($detalle['cto_uni_ejecutora']=='01'){
                                         $num_op_uni_uno++;
                                         $num_op=$num_op_uni_uno;
@@ -229,32 +322,29 @@ ________________________________________________________________________________
                                         break;
                                     }
                                     //exit;
-    
-                            }
-                                                       
-                                if($temporales){
-                                    
-                                        $actualizaciones = $this->actualizarCampos();
-                                        //exit;
-                                        if($actualizaciones==1){
-                                                $tablas_finales = $this->cargaTablasFinales();
-                                        }
-                                        if($tablas_finales){
-                                                if($detalle['cto_uni_ejecutora']=='01'){
-                                                    $num_op_uni_uno++;
-
-                                                }elseif($detalle['cto_uni_ejecutora']=='02'){
-                                                    $num_op_uni_dos++;
-                                                }
-                                                $valido=1;
-                                        }else{
-                                                $valido=0;
-                                        }
-                                    }else{
-                                        $valido=0;
-                                        echo "error al intentar cargar tablas temporales";
-                                        break;
+                                }
+                            if($temporales)
+                                 {  $actualizaciones = $this->actualizarCampos();
+                                    //exit;
+                                    if($actualizaciones==1){
+                                            $tablas_finales = $this->cargaTablasFinales();
                                     }
+                                    if($tablas_finales){
+                                            if($detalle['cto_uni_ejecutora']=='01'){
+                                                $num_op_uni_uno++;
+
+                                            }elseif($detalle['cto_uni_ejecutora']=='02'){
+                                                $num_op_uni_dos++;
+                                            }
+                                            $valido=1;
+                                    }else{
+                                            $valido=0;
+                                    }
+                                 }
+                             else{  $valido=0;
+                                    echo "error al intentar cargar tablas temporales";
+                                    break;
+                                 }
                     }
                     if(!$valido){
                         echo "<br>Error al verificar una nomina";
@@ -301,7 +391,6 @@ ________________________________________________________________________________
  
         
     }
-    
     
  /**
   * Función para registrar en la bd la solicitud de aprobacion de giro
@@ -393,15 +482,11 @@ ________________________________________________________________________________
     function consultarDatosSolicitudGiro($id_solicitud,$id_nomina,$id_detalle){
         $datos = array('id_solicitud'=>$id_solicitud,
                         'id_nomina'=>$id_nomina,
-                        'id_detalle'=>$id_detalle
-            );
+                        'id_detalle'=>$id_detalle);
         $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_nomina,"datos_solicitud_giro",$datos);
         $resultado = $this->ejecutarSQL($this->configuracion, $this->acceso_nomina, $cadena_sql, "busqueda");
         return $resultado;
-
     }
-    
-    
     /**
      * Funcion para organizar los datos que se van a registrar en la tabla temporal de ordenes de pago
      * @param <array> $detalle
@@ -1021,7 +1106,6 @@ ________________________________________________________________________________
             //echo "<br>cadena ".$cadena_sql;
             $valor = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
             return $valor;
-        
     }
     
     
@@ -1034,7 +1118,6 @@ ________________________________________________________________________________
             //echo "<br>cadena ".$cadena_sql;//exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
     
     /**
@@ -1046,7 +1129,6 @@ ________________________________________________________________________________
             //echo "<br>cadena ".$cadena_sql;//exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
     
     /**
@@ -1323,18 +1405,10 @@ ________________________________________________________________________________
                                                 $tablas_cargadas=1;
                                             }
                                     }
-
-                                    
                             }
-
-                            
                     }
-
-                    
             }
-            
             return $tablas_cargadas;
-            
    }
    
    /**
@@ -1358,50 +1432,29 @@ ________________________________________________________________________________
             }
             
    }
-   
-   /**
-    * Función para realizar la limpieza de las tablas temporales 
-    */
-   function vaciarTablasTemporales(){
-       $this->vaciarOrdenPagoTmp();
-       $this->vaciarImputacionTmp();
-       $this->vaciarDetalleDescuentoTmp();
+   /** Función para realizar la limpieza de las tablas temporales */
+   function vaciarTablasTemporales($usuario){
+       $this->vaciarOrdenPagoTmp($usuario);
+       $this->vaciarImputacionTmp($usuario);
+       $this->vaciarDetalleDescuentoTmp($usuario);
    }
-   
-   /**
-    * Funcion para vaciar la tabla temporal de ordenes de pago
-    * @return type 
-    */
-   function vaciarOrdenPagoTmp(){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"vaciar_orden_pago_tmp",'');
-           // echo "<br>cadena ".$cadena_sql;//exit;
+   /** Funcion para vaciar la tabla temporal de ordenes de pago @return type  */
+   function vaciarOrdenPagoTmp($usuario){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"vaciar_orden_pago_tmp",$usuario);
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
-   
-    /**
-     * Función para vaciar la tabla temporal de imputacion
-     * @return type 
-     */
-    function vaciarImputacionTmp(){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"vaciar_imputacion_tmp",'');
-            //echo "<br>cadena ".$cadena_sql;//exit;
+    /** Función para vaciar la tabla temporal de imputacion @return type */
+    function vaciarImputacionTmp($usuario){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"vaciar_imputacion_tmp",$usuario);
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
-   
-    /**
-     * Función para vaciar la tabla temporal de detalle de descuentos
-     * @return type 
-     */
-    function vaciarDetalleDescuentoTmp(){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"vaciar_detalle_descuento_tmp",'');
-            //echo "<br>cadena ".$cadena_sql;//exit;
+    /** Función para vaciar la tabla temporal de detalle de descuentos @return type */
+    function vaciarDetalleDescuentoTmp($usuario){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"vaciar_detalle_descuento_tmp",$usuario);
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
     
     /**
@@ -1409,350 +1462,82 @@ ________________________________________________________________________________
      * insertados anteriormentecuando, al momento de algun error 
      */
     function hacerRollback(){
-            $ordenes_pago_tmp = $this->consultarTmpOrdenPago();
-        
-            $this->rollbackDocumentoPago($ordenes_pago_tmp);
-            //$this->rollbackOrdenPago($ordenes_pago_tmp);
-            $imputaciones_tmp = $this->consultarImputacionTmp();
-            $informacion_exogena_tmp = $this->consultarInformacionExogenaDeTmp();
-            //var_dump($informacion_exogena_tmp);exit;
-            $informacion_detalle_descuentos_tmp = $this->consultarDetalleDescuentosDeTmp();
-            $this->rollbackDetalleDescuento($informacion_detalle_descuentos_tmp);
-            //$this->rollbackInformacionExogena($informacion_exogena_tmp);
-            //$this->rollbackOgtRegistroPresupuestal($imputaciones_tmp);
-            //$this->rollbackImputacion($imputaciones_tmp);
-            $cuentas_orden_pago2 = $this->consultarCuentasOrdenPago2Tmp();
-            $this->rollbackCuentasOrdenPago2($cuentas_orden_pago2);
-    }
-  
-    /**
-     * Función para realizar el borrado de la tabla documento de pago
-     * @param type $ordenes_pago_tmp 
-     */
-    function rollbackDocumentoPago($ordenes_pago_tmp){
-        //var_dump($ordenes_pago_tmp);
-        if(is_array($ordenes_pago_tmp)){
-            foreach ($ordenes_pago_tmp as $key => $orden) {
-                $datos = array('VIGENCIA' => $orden['VIGENCIA'],
-                'ENTIDAD' => $orden['ENTIDAD'],
-                'UNIDAD_EJECUTORA' => $orden['UNIDAD_EJECUTORA'],
-                'TIPO_DOCUMENTO' => $orden['TIPO_DOCUMENTO'],
-                'CONSECUTIVO' => $orden['CONSECUTIVO']);
-                $this->eliminarDocumentoPago($datos);
-            }
-        }
-        
+           $ordenes_pago_tmp = $this->consultarTmpOrdenPago();
+           if(is_array($ordenes_pago_tmp))
+               { foreach ($ordenes_pago_tmp as $key => $orden) 
+                        { $datos = array('VIGENCIA' => $orden['VIGENCIA'],
+                                         'VIGENCIA_PRESUPUESTO' => $orden['VIGENCIA_PRESUPUESTO'],
+                                         'ENTIDAD' => $orden['ENTIDAD'],
+                                         'UNIDAD_EJECUTORA' => $orden['UNIDAD_EJECUTORA'],
+                                         'TIPO_DOCUMENTO' => $orden['TIPO_DOCUMENTO'],
+                                         'CONSECUTIVO' => $orden['CONSECUTIVO'],
+                                         'COTE_ID'=> $orden['CONCEPTO']);
+                          echo "<br> conc -> ".$this->eliminarConceptosOrdenPago($datos);
+                          echo "<br> cta -> ".$this->eliminarCuentasOrdenPago($datos);
+                          echo "<br> desc -> ".$this->eliminarDetalleDescuento($datos);
+                          echo "<br> exog -> ".$this->eliminarInformacionExogena($datos);
+                          echo "<br> reg -> ".$this->eliminarOgtRegistroPresupuestal($datos);
+                          echo "<br> imp -> ".$this->eliminarImputacion($datos);
+                          echo "<br> op -> ".$this->eliminarOrdenPago($datos);
+                          echo "<br> docu -> ".$this->eliminarDocumentoPago($datos);
+                        }
+                }
     }
     
-    /**
-     * Función para eliminar documento de pago
-     * @param type $datos
-     * @return type 
-     */
-    function eliminarDocumentoPago($datos){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_documento_pago",$datos);
-            echo "<br>cadena ".$cadena_sql;//exit;
-            $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
-            return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
-    }
- 
-    /**
-     * Función para consultar las ordenes de pago que estan en la tabla temporal
-     * @return type 
-     */
+     /** Función para consultar las ordenes de pago que estan en la tabla temporal @return type */
     function consultarTmpOrdenPago(){
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"orden_pago_tmp",'');
-            echo "<br>cadena ".$cadena_sql;
             $valor = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
             return $valor;
     }
-
-    
-    /**
-     * Función para realizar el borrado de la tabla de ordenes de pago 
-     */
-    function rollbackOrdenPago($ordenes_pago_tmp){
-        //var_dump($ordenes_pago_tmp);
-        if(is_array($ordenes_pago_tmp)){
-            foreach ($ordenes_pago_tmp as $orden) {
-                $datos = array('VIGENCIA'=>$orden['VIGENCIA'],
-                'ENTIDAD'=>$orden['ENTIDAD'],
-                'UNIDAD_EJECUTORA'=>$orden['UNIDAD_EJECUTORA'],
-                'TIPO_DOCUMENTO'=>$orden['TIPO_DOCUMENTO'],
-                'CONSECUTIVO'=>$orden['CONSECUTIVO'],
-                'TER_ID'=>$orden['TER_ID'],
-                'DETALLE'=>$orden['DETALLE'],
-                'FORMA_PAGO'=>$orden['FORMA_PAGO'],
-                'NUMERO_CUENTA'=>$orden['NUMERO_CUENTA'],
-                'BANCO'=>$orden['BANCO'],
-                'CLASE'=>$orden['CLASE']);
-                $this->eliminarOrdenPago($datos);
-            }
-        }
-        
-    }
-    
-    /**
-     * Funcion para eliminar orden de pago
-     * @param type $datos
-     * @return type 
-     */
-    function eliminarOrdenPago($datos){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_orden_pago",$datos);
-            echo "<br>cadena OP ".$cadena_sql;//exit;
+    /** Función para eliminar los registros de la tabla CONCEPTOS DE PAGO*/
+    function eliminarConceptosOrdenPago($datos){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_conceptos_orden_pago",$datos);
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
-    }
-    
-    /**
-     * Funcion para realizar la verificación uy borrado de imputaciones
-     * @param type $imputaciones 
-     */
-    function rollbackImputacion($imputaciones){
-        var_dump($imputaciones);
-        if(is_array($imputaciones)){
-            foreach ($imputaciones as $imputacion) {
-                $datos = array('VIGENCIA'=>$imputacion['VIGENCIA'],
-                'ENTIDAD'=>$imputacion['ENTIDAD'],
-                'UNIDAD_EJECUTORA'=>$imputacion['UNIDAD_EJECUTORA'],
-                'TIPO_DOCUMENTO'=>$imputacion['TIPO_DOCUMENTO'],
-                'CONSECUTIVO'=>$imputacion['CONSECUTIVO'],
-                'RUBRO_INTERNO'=>$imputacion['RUBRO_INTERNO'],
-                'DISPONIBILIDAD'=>$imputacion['DISPONIBILIDAD'],
-                'VALOR_BRUTO'=>$imputacion['VALOR_BRUTO'],
-                'ANO_PAC'=>$imputacion['ANO_PAC'],
-                'MES_PAC'=>$imputacion['MES_PAC'],
-                'REGISTRO'=>$imputacion['REGISTRO']
-                );
-                $this->eliminarImputacion($datos);
-            }
-        }
-        
-    }
-    
-    /**
-     * Función para eliminar imputacion
-     * @param type $datos
-     * @return type 
-     */
-    function eliminarImputacion($datos){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_imputacion",$datos);
-            echo "<br>cadena ".$cadena_sql;//exit;
+    }      
+    /*** Función para eliminar CUENTAS DE PAGO*/
+    function eliminarCuentasOrdenPago($datos){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_cuentas_orden_pago",$datos);
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
-    
-    /**
-     * Función para consultar las imputaciones de la table temporal
-     * @return type 
-     */
-    function consultarImputacionTmp(){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"imputacion_tmp",'');
-            echo "<br>cadena ".$cadena_sql;
-            $valor = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
-            return $valor;
-    }
-    
-     
-    /**
-     * Función para realizar la verificacion y borrado de los registros de ogt registro presupuestal
-     * @param type $imputaciones 
-     */
-    function rollbackOgtRegistroPresupuestal($imputaciones){
-        var_dump($imputaciones);
-        if(is_array($imputaciones)){
-            foreach ($imputaciones as $imputacion) {
-                $datos = array('VIGENCIA'=> $imputacion['VIGENCIA'],
-                            'ENTIDAD'=> $imputacion['ENTIDAD'],
-                            'UNIDAD_EJECUTORA'=> $imputacion['UNIDAD_EJECUTORA'],
-                            'TIPO_DOCUMENTO'=> $imputacion['TIPO_DOCUMENTO'],
-                            'CONSECUTIVO'=> $imputacion['CONSECUTIVO'],
-                            'RUBRO_INTERNO'=> $imputacion['RUBRO_INTERNO'],
-                            'DISPONIBILIDAD'=> $imputacion['DISPONIBILIDAD'],
-                            'REGISTRO'=> $imputacion['REGISTRO'],
-                            'VALOR_REGISTRO'=> $imputacion['VALOR_BRUTO']
-                );
-                $this->eliminarOgtRegistroPresupuestal($datos);
-            }
-        }
-        
-    }
-    
-    /**
-     * Función para eliminar de la tabla ogt registro presupuestal
-     * @param type $datos
-     * @return type 
-     */
-    function eliminarOgtRegistroPresupuestal($datos){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_ogt_registro_presupuestal",$datos);
-            echo "<br>cadena ogt ".$cadena_sql;//exit;
-            $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
-            return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
-    }
-    
-    /**
-     * Función para realizar la verificación y borrado de la informacion exogena
-     * @param type $datos_tmp 
-     */
-    function rollbackInformacionExogena($datos_tmp){
-        var_dump($datos_tmp);
-        if(is_array($datos_tmp)){
-            foreach ($datos_tmp as $dato) {
-                $datos = array('VIGENCIA'=>$dato['VIGENCIA'],
-                                'ENTIDAD'=>$dato['ENTIDAD'],
-                                'UNIDAD_EJECUTORA'=>$dato['UNIDAD_EJECUTORA'],
-                                'TIPO_DOCUMENTO'=>$dato['TIPO_DOCUMENTO'],
-                                'CONSECUTIVO'=>$dato['CONSECUTIVO'],
-                                'TIPO_DOCUMENTO_IE'=>$dato['TIPO_DOCUMENTO_IE'],
-                                'NUMERO_DOCUMENTO'=>$dato['NUMERO_DOCUMENTO'],
-                                'RUBRO_INTERNO'=>$dato['RUBRO_INTERNO'],
-                                'DISPONIBILIDAD'=>$dato['DISPONIBILIDAD'],
-                                'REGISTRO'=>$dato['REGISTRO'],
-                                'TER_ID'=>$dato['TER_ID'],
-                                'FORMA_PAGO'=>$dato['FORMA_PAGO'],
-                                'NUMERO_CUENTA'=>$dato['NUMERO_CUENTA'],
-                                'BANCO'=>$dato['BANCO'],
-                                'CLASE'=>$dato['CLASE'],
-                                'VALOR_BRUTO'=>$dato['VALOR_BRUTO']
-
-                );
-                $this->eliminarInformacionExogena($datos);
-            }
-        }
-        
-    }
-    
-    /**
-     * Función para eliminar informacion exogena
-     * @param type $datos
-     * @return type 
-     */
-    function eliminarInformacionExogena($datos){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_informacion_exogena",$datos);
-            echo "<br>cadena ogt ".$cadena_sql;//exit;
-            $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
-            return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
-    }
-    
-    
-    /**
-     * Función para consultar la informacion exogena que esta en las temporales
-     * @return type 
-     */
-    function consultarInformacionExogenaDeTmp(){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"exogena_de_tmp",'');
-            echo "<br>cadena ".$cadena_sql;
-            $valor = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
-            return $valor;
-    }
-    
-    /**
-     * Función para realizar la verificación y borrado de los detalles de descuento
-     * @param type $datos_tmp 
-     */
-    function rollbackDetalleDescuento($datos_tmp){
-        var_dump($datos_tmp);
-        if(is_array($datos_tmp)){
-            foreach ($datos_tmp as $dato) {
-                $datos = array('VIGENCIA'=>$dato['VIGENCIA'],
-                                'ENTIDAD'=>$dato['ENTIDAD'],
-                                'UNIDAD_EJECUTORA'=>$dato['UNIDAD_EJECUTORA'],
-                                'TIPO_DOCUMENTO'=>$dato['TIPO_DOCUMENTO'],
-                                'CONSECUTIVO'=>$dato['CONSECUTIVO'],
-                                'RUBRO_INTERNO'=>$dato['RUBRO_INTERNO'],
-                                'DISPONIBILIDAD'=>$dato['DISPONIBILIDAD'],
-                                'REGISTRO'=>$dato['REGISTRO'],
-                                'NUMERO_DOCUMENTO'=>$dato['NUMERO_DOCUMENTO'],
-                                'CODIGO_INTERNO'=>$dato['CODIGO_INTERNO'],
-                                'VALOR_BASE_RETENCION'=>$dato['VALOR_BASE_RETENCION'],
-                                'VALOR_DESCUENTO'=>$dato['VALOR_DESCUENTO']  );
-                $this->eliminarDetalleDescuento($datos);
-            }
-        }
-        
-    }
-    
-    /**
-     * Función para eliminar detalle de descuentos
-     * @param type $datos
-     * @return type 
-     */
+    /** Función para eliminar detalle de descuentos */
     function eliminarDetalleDescuento($datos){
             $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_detalle_descuento",$datos);
-            echo "<br>cadena ogt ".$cadena_sql;//exit;
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
-    
-    
-    /**
-     * Función para consultar los detalles de descuentos de la tabla temporal
-     * @return type 
-     */
-    function consultarDetalleDescuentosDeTmp(){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"detalle_descuento_tmp",'');
-            echo "<br>cadena ".$cadena_sql;
-            $valor = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
-            return $valor;
-        
-    }
-    
-    /**
-     * Función para realizar la verificación y borrado de las cuentas de orden pago 2
-     * @param type $datos_cuentas_orden_pago2 
-     */
-    function rollbackCuentasOrdenPago2($datos_cuentas_orden_pago2){
-        var_dump($datos_cuentas_orden_pago2);
-        if(is_array($datos_cuentas_orden_pago2)){
-            foreach ($datos_cuentas_orden_pago2 as $dato) {
-                $datos = array('CONSECUTIVO'=>$dato['CONSECUTIVO'],
-                                'ENTIDAD'=>$dato['ENTIDAD'],
-                                'TIPO_DOCUMENTO'=>$dato['TIPO_DOCUMENTO'],
-                                'UNIDAD_EJECUTORA'=>$dato['UNIDAD_EJECUTORA'],
-                                'VIGENCIA'=>$dato['VIGENCIA'],
-                                'CUENTA_CONTABLE'=>$dato['CUENTA_CONTABLE'],
-                                'NATURALEZA'=>$dato['NATURALEZA'],
-                                'CONSECUTIVO_CUENTA'=>$dato['CONSECUTIVO_CUENTA'],
-                                'VALOR_BRUTO'=>$dato['VALOR_BRUTO'],
-                                'ES_DESCUENTO'=>$dato['ES_DESCUENTO']);
-                $this->eliminarDetalleDescuento($datos);
-            }
-        }
-        
-    }
-    
-    /**
-     * Función para eliminar las cuentas de orden pago 2
-     * @param type $datos
-     * @return type 
-     */
-    function eliminarCuentasOrdenPago2($datos){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_cuentas_orden_pago2",$datos);
-            echo "<br>cadena ogt ".$cadena_sql;//exit;
+    /** Función para eliminar informacion exogena @param type $datos @return type  */
+    function eliminarInformacionExogena($datos){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_informacion_exogena",$datos);
             $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
             return $this->totalAfectados($this->configuracion, $this->acceso_sic);
-        
     }
-    
-    
-    /**
-     * Funcion para consultar las cuentas de orden pago 2 que estan en las temporales
-     * @return type 
-     */
-    function consultarCuentasOrdenPago2Tmp(){
-            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"cuentas_orden_pago2_tmp",'');
-            echo "<br>cadena ".$cadena_sql;
-            $valor = $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "busqueda");
-            return $valor;
-        
+    /** Función para eliminar de la tabla ogt registro presupuestal @param type $datos @return type  */
+    function eliminarOgtRegistroPresupuestal($datos){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_ogt_registro_presupuestal",$datos);
+            $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
+            return $this->totalAfectados($this->configuracion, $this->acceso_sic);
     }
-    
+    /** Función para eliminar imputacion @param type $datos @return type */
+    function eliminarImputacion($datos){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_imputacion",$datos);
+            $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
+            return $this->totalAfectados($this->configuracion, $this->acceso_sic);
+    }
+    /** Funcion para eliminar orden de pago @param type $datos @return type */
+    function eliminarOrdenPago($datos){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_orden_pago",$datos);
+            $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
+            return $this->totalAfectados($this->configuracion, $this->acceso_sic);
+    }
+    /** Función para eliminar documento de pago  @param type $datos  @return type      */
+    function eliminarDocumentoPago($datos){
+            $cadena_sql = $this->sql->cadena_sql($this->configuracion,$this->acceso_sic,"eliminar_documento_pago",$datos);
+            $this->ejecutarSQL($this->configuracion, $this->acceso_sic, $cadena_sql, "");
+            return $this->totalAfectados($this->configuracion, $this->acceso_sic);
+    }
     
 } // fin de la clase
 	

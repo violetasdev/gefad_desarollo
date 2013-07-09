@@ -44,22 +44,28 @@ class bloqueAdminSolicitudAprobarGiro extends bloque
 	
 	
 	function html($configuracion)
-	{		
-		//Rescatar datos de sesion
-		$usuario = $this->funcion->rescatarValorSesion($configuracion, $this->funcion->acceso_db, "usuario");
-		$id_usuario = $this->funcion->rescatarValorSesion($configuracion, $this->funcion->acceso_db, "id_usuario");
-		$_REQUEST['opcion']=(isset($_REQUEST['opcion'])?$_REQUEST['opcion']:'');
-                //$vigencia=(isset($_REQUEST['vigencia'])?$_REQUEST['vigencia']:date('Y'));
-                $tema=(isset($tema)?$tema:'');
-                switch ($_REQUEST['opcion'])
-		{ 
-
-                        case "revisarNominasGeneradas":
+	{   //Rescatar datos de sesion
+            $usuario = $this->funcion->rescatarValorSesion($configuracion, $this->funcion->acceso_db, "usuario");
+            $id_usuario = $this->funcion->rescatarValorSesion($configuracion, $this->funcion->acceso_db, "id_usuario");
+            $_REQUEST['opcion']=(isset($_REQUEST['opcion'])?$_REQUEST['opcion']:'');
+            //$vigencia=(isset($_REQUEST['vigencia'])?$_REQUEST['vigencia']:date('Y'));
+            $tema=(isset($tema)?$tema:'');
+            switch ($_REQUEST['opcion'])
+		{      case "revisarNominasGeneradas":
                                 $this->funcion->revisarNominasGeneradas();
                                 break;
-			
-                        case 'solicitar_aprobacion_giro':
-		  		$this->funcion->revisarSolicitudAprobacionGiro();
+	               case 'solicitar_aprobacion_giro':
+                                $aprobados=array();
+                                $total = (isset($_REQUEST['total_registros'])?$_REQUEST['total_registros']:0);
+                                $cont=0;
+                                for($i=0;$i<$total;$i++){
+                                        if(isset($_REQUEST["id_nomina_".$i]))
+                                                    {   $aprobados[$cont]['id_nomina']=$_REQUEST["id_nomina_".$i];
+                                                        $aprobados[$cont]['vigencia']=$_REQUEST["vigencia_".$i];
+                                                        $cont++;
+                                                    }
+                                    }
+            	  		$this->funcion->revisarSolicitudAprobacionGiro($aprobados);
 				break;
                       
                         default:
@@ -72,23 +78,33 @@ class bloqueAdminSolicitudAprobarGiro extends bloque
 	
 	
 	function action($configuracion)
-	{
+	{   //echo "llego";exit;
 		switch($_REQUEST['opcion'])
 		{	
-                  
-                           
+                     case 'solicitar_aprobacion_giro':
+                            //recupera los datos para realizar la busqueda de usuario	
+                          	$pagina = $configuracion["host"].$configuracion["site"]."/index.php?";
+                                $variable = "pagina=" . $_REQUEST["pagina"];
+                                //$variable.= "&opcion=" . $_REQUEST["opcion"];
+                                foreach ($_REQUEST as $key => $value) 
+                                    { if (!isset($_REQUEST[$configuracion['enlace']]) && $key != 'action' && $key != 'pagina' )  
+                                                { $variable .= "&$key=" . $_REQUEST[$key];}
+                                    }
+                                include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
+				$this->cripto = new encriptar();
+				$variable = $this->cripto->codificar_url($variable,$configuracion);
+				echo "<script>location.replace('".$pagina.$variable."')</script>";
+                        break;
+
+
                       default: 
-				//recupera los datos para realizar la busqueda de usuario				
-				$pagina = $configuracion["host"].$configuracion["site"]."/index.php?";
-				$variable = "pagina=nom_adminSolicitudAprobarGiroOrdenador";
-				$variable .= "&opcion=".$_REQUEST["opcion"];
-				$variable .= "&vigencia=".$_REQUEST["vigencia"];
-				if(isset($_REQUEST['clave']))
-					{
-					$variable .= "&clave=".$_REQUEST["clave"];
-					}
-				if(isset($_REQUEST['criterio_busqueda'])){
-                                        $variable .= "&criterio_busqueda=".$_REQUEST["criterio_busqueda"];
+				//recupera los datos para realizar la busqueda de usuario	
+                          	$pagina = $configuracion["host"].$configuracion["site"]."/index.php?";
+                                $variable = "pagina=" . $_REQUEST["pagina"];
+                                foreach ($_REQUEST as $key => $value) {
+                                    if (!isset($_REQUEST[$configuracion['enlace']]) && $key != 'action' && $key != 'pagina') {
+                                        $variable .= "&$key=" . $_REQUEST[$key];
+                                    }
                                 }
 				include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
 				$this->cripto = new encriptar();
@@ -101,13 +117,9 @@ class bloqueAdminSolicitudAprobarGiro extends bloque
 	
 	
 }// fin clase bloquenom_adminNovedad
-
-
 // @ Crear un objeto bloque especifico
 
 $esteBloque = new bloqueAdminSolicitudAprobarGiro($configuracion);
-
-
 if(isset($_REQUEST['cancelar']))
 {   unset($_REQUEST['action']);		
 	$pagina = $configuracion["host"].$configuracion["site"]."/index.php?";
