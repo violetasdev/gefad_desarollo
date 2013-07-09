@@ -42,15 +42,10 @@ echo "<br>clave: ".$pwd." => ".$crypto->codificar_variable($pwd,  $semilla);
 
 echo "<br><br>DECODIFICACION DE CLAVE<BR> ";
 $usuario2='4QON2E68eVHH9mzaiqVBMg';
-$pwd2='XAM9X_26iFEPBEvJ7II';		
+$pwd2='4gNQjk68eVErQchONtU';		
 
 echo "<br>usuario: ".$usuario2." => ".$crypto->decodificar_variable($usuario2,  $semilla);
 echo "<br>clave: ".$pwd2." => ".$crypto->decodificar_variable($pwd2,  $semilla);	
           
-$usuario2='WAG17r1-xFFgrS7CYzhEkqFeij7i77c';
-$pwd2='WQGk-b1-xFGbhyv7sj3JnSxCHqBj3i0';		
-
-echo "<br>usuario: ".$usuario2." => ".$crypto->decodificar_variable($usuario2,  $semilla);
-echo "<br>clave: ".$pwd2." => ".$crypto->decodificar_variable($pwd2,  $semilla);	
 
 ?>
