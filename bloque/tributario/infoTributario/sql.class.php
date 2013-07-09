@@ -29,10 +29,11 @@ class sql_infoTributario extends sql {
                 break;
 
             case "invocar_respuestas":
-                $cadena_sql = " SELECT * ";
+                $cadena_sql =" SELECT resp_preg_id, resp_enc_id, resp_funcionario_documento, resp_annio, resp_fec_registro, resp_respuesta  ";
                 $cadena_sql.=" FROM ";
                 $cadena_sql.=" tributario.tributario_respuestas_enc ";
                 $cadena_sql.=" WHERE resp_funcionario_documento=" . $variable['identificacion'] . " ";
+                $cadena_sql.=" ORDER BY resp_preg_id ASC";
                 break;
 
             case "invocar_preguntas":

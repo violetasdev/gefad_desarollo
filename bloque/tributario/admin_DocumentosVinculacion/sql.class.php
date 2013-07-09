@@ -16,22 +16,6 @@ class sql_adminVinculacion extends sql {
     function cadena_sql($opcion, $variable = "") {
 
         switch ($opcion) {
-            case "NO IMPLEMENTADO":
-                //En ORACLE: Caso no implementado, se deja para referencia
-                $cadena_sql = "SELECT ";
-                $cadena_sql.="doc_apellido DOC_APEL, ";
-                $cadena_sql.="doc_nombre DOC_NOM, ";
-                $cadena_sql.="doc_tip_iden DOC_TIP_IDEN, ";
-                $cadena_sql.="doc_nro_iden DOC_NRO_IDEN, ";
-                $cadena_sql.="doc_email DOC_EMAIL ";
-                $cadena_sql.="FROM ";
-                $cadena_sql.="acdocente ";
-                $cadena_sql.="WHERE ";
-                $cadena_sql.="doc_nro_iden=" . $variable['identificacion'] . " ";
-                $cadena_sql.="AND ";
-                $cadena_sql.="doc_estado = 'A' ";
-                break;
-
             case "datosUsuario":
                 //En ORACLE
                 $cadena_sql = "SELECT ";
@@ -46,6 +30,8 @@ class sql_adminVinculacion extends sql {
                 $cadena_sql.="car_estado PLA_ESTADO, ";
                 $cadena_sql.="emp_direccion PLA_DIRECC, ";
                 $cadena_sql.="emp_telefono PLA_TELE, ";
+                $cadena_sql.="emp_nro_iden ID, ";
+                $cadena_sql.="emp_desde PLA_FECHA_IN, ";
                 $cadena_sql.="decode(CAR_TC_COD,'DP','DOCENTE PLANTA','DC','DOCENTE PLANTA','DH','DOCENTE PLANTA','FUNCIONARIO PLANTA') VINCULACION ";
                 $cadena_sql.="FROM ";
                 $cadena_sql.="peemp, pecargo ";
@@ -68,12 +54,13 @@ class sql_adminVinculacion extends sql {
                 $cadena_sql.="ib_tipo_identificacion PLA_TIPO_IDEN, ";
                 $cadena_sql.="' ' PLA_EMAIL, ";
                 $cadena_sql.="' ' PLA_RES, ";
-                $cadena_sql.="' ' PLA_ESTADO ";
+                $cadena_sql.="' ' PLA_ESTADO, ";
+                $cadena_sql.="id ID, ";
+                $cadena_sql.="ib_fecha_inicial PLA_FECHA_IN ";
                 $cadena_sql.="FROM ";
                 $cadena_sql.="SHD_INFORMACION_BASICA ";
                 $cadena_sql.="WHERE ";
                 $cadena_sql.="ib_codigo_identificacion=" . $variable['identificacion'] . " ";
-
                 break;
 
             case "vinculaciones":
@@ -88,7 +75,7 @@ class sql_adminVinculacion extends sql {
                 $cadena_sql.="dvin.dtv_resolucion VIN_RESOLUCION, ";
                 $cadena_sql.="dvin.dtv_interno_res VIN_INT_RES ";
                 $cadena_sql.=" FROM ";
-                $cadena_sql.="acdoctipvin dvin ,actipvin tvin ,accra cra ";
+                $cadena_sql.="mntac.acdoctipvin dvin ,mntac.actipvin tvin ,mntac.accra cra ";
                 $cadena_sql.=" WHERE ";
                 $cadena_sql.="dvin.dtv_tvi_cod=tvin.tvi_cod";
                 $cadena_sql.=" AND ";
@@ -105,7 +92,6 @@ class sql_adminVinculacion extends sql {
                 $cadena_sql.=" dvin.dtv_doc_nro_iden=" . $variable['identificacion'] . " ";
 
                 $cadena_sql.=" ORDER BY tvin.tvi_nombre DESC, dvin.dtv_ape_ano DESC,dvin.dtv_cra_cod ";
-
                 break;
 
             case "vigenciaVinculacion":
@@ -113,7 +99,7 @@ class sql_adminVinculacion extends sql {
                 $cadena_sql = " SELECT DISTINCT";
                 $cadena_sql.=" dtv_ape_ano COD_ANIO,";
                 $cadena_sql.=" dtv_ape_ano ANIO";
-                $cadena_sql.=" FROM acdoctipvin";
+                $cadena_sql.=" FROM mntac.acdoctipvin";
                 $cadena_sql.=" where dtv_doc_nro_iden=" . $variable['identificacion'] . " ";
                 $cadena_sql.=" ORDER BY dtv_ape_ano DESC";
                 break;
@@ -170,11 +156,20 @@ class sql_adminVinculacion extends sql {
                 break;
 
             case "consultar_respuestas":
-                $cadena_sql = " SELECT distinct resp_enc_id, resp_funcionario_documento, resp_annio, resp_contrato, resp_fec_registro ";
+                $cadena_sql =" SELECT distinct resp_preg_id,resp_enc_id, resp_funcionario_documento, resp_annio, resp_contrato, resp_fec_registro ";
                 $cadena_sql.=" FROM ";
                 $cadena_sql.=" tributario.tributario_respuestas_enc ";
                 $cadena_sql.=" WHERE resp_funcionario_documento=" . $variable['identificacion'] . " ";
-                break;   
+                $cadena_sql.=" ORDER BY resp_preg_id";
+                break;
+
+            case "actualizar_respuestas":
+                $cadena_sql = " update tributario.tributario_respuestas_enc SET ";
+                $cadena_sql.=" resp_fec_registro = '" . $variable['fecha_reg'] . "', ";
+                $cadena_sql.=" resp_respuesta = '" . $variable['resp'] . "' ";
+                $cadena_sql.=" where resp_funcionario_documento = '" . $variable['id_num'] . "' ";
+                $cadena_sql.=" and resp_preg_id = '" . $variable['id_preg'] . "' ";
+                break;
 
             case "consultar_direccion_SHD":
                 $cadena_sql = " SELECT ";
@@ -192,27 +187,126 @@ class sql_adminVinculacion extends sql {
                 $cadena_sql.= " FROM ";
                 $cadena_sql.= " shd_contactos,shd_informacion_basica ";
                 $cadena_sql.= " where shd_contactos.id=shd_informacion_basica.id ";
-                $cadena_sql.= " and ib_codigo_identificacion=" . $variable['identificacion'] . " ";
+                $cadena_sql.=" and co_tipo_contacto='DIR' ";
+                $cadena_sql.= " and ib_codigo_identificacion='" . $variable['identificacion'] . "' ";
                 break;
 
             case "consultar_telefono_SHD":
                 $cadena_sql = "SELECT ";
-                $cadena_sql.= "ib_primer_nombre PLA_NOMBRE1, ";
-                $cadena_sql.= "ib_segundo_nombre PLA_NOMBRE2, ";
-                $cadena_sql.= "ib_primer_apellido PLA_APELLIDO1, ";
-                $cadena_sql.= "ib_segundo_apellido PLA_APELLIDO2, ";
-                $cadena_sql.= "ib_codigo_identificacion PLA_NRO_IDEN, ";
-                $cadena_sql.= "ib_tipo_identificacion PLA_TIPO_IDEN, ";
-                $cadena_sql.= "' ' PLA_EMAIL, ";
-                $cadena_sql.= "' ' PLA_RES, ";
-                $cadena_sql.= "' ' PLA_ESTADO, ";
-                $cadena_sql.= "co_tipo_contacto DATO_B_DIR, ";
-                $cadena_sql.= "co_VALOR DATO_B_V_DIR ";
-                $cadena_sql.= "FROM ";
-                $cadena_sql.= " shd_contactos,shd_informacion_basica ";
-                $cadena_sql.= " where shd_contactos.id=shd_informacion_basica.id ";
-                $cadena_sql.= " and co_tipo_contacto='TEL' ";
-                $cadena_sql.=" and ib_codigo_identificacion=" . $variable['identificacion'] . " ";
+                $cadena_sql.="ib_primer_nombre PLA_NOMBRE1, ";
+                $cadena_sql.="ib_segundo_nombre PLA_NOMBRE2, ";
+                $cadena_sql.="ib_primer_apellido PLA_APELLIDO1, ";
+                $cadena_sql.="ib_segundo_apellido PLA_APELLIDO2, ";
+                $cadena_sql.="ib_codigo_identificacion PLA_NRO_IDEN, ";
+                $cadena_sql.="ib_tipo_identificacion PLA_TIPO_IDEN, ";
+                $cadena_sql.="' ' PLA_EMAIL, ";
+                $cadena_sql.="' ' PLA_RES, ";
+                $cadena_sql.="' ' PLA_ESTADO, ";
+                $cadena_sql.="co_tipo_contacto DATO_B_TEL, ";
+                $cadena_sql.="co_VALOR DATO_B_V_TEL ";
+                $cadena_sql.="FROM ";
+                $cadena_sql.=" shd_contactos,shd_informacion_basica ";
+                $cadena_sql.=" where shd_contactos.id=shd_informacion_basica.id ";
+                $cadena_sql.=" and co_tipo_contacto='TEL' ";
+                $cadena_sql.=" and ib_codigo_identificacion='" . $variable['identificacion'] . "' ";
+                break;
+
+            case "consultar_email_SHD":
+                $cadena_sql = "SELECT ";
+                $cadena_sql.="ib_primer_nombre PLA_NOMBRE1, ";
+                $cadena_sql.="ib_segundo_nombre PLA_NOMBRE2, ";
+                $cadena_sql.="ib_primer_apellido PLA_APELLIDO1, ";
+                $cadena_sql.="ib_segundo_apellido PLA_APELLIDO2, ";
+                $cadena_sql.="ib_codigo_identificacion PLA_NRO_IDEN, ";
+                $cadena_sql.="ib_tipo_identificacion PLA_TIPO_IDEN, ";
+                $cadena_sql.="' ' PLA_EMAIL, ";
+                $cadena_sql.="' ' PLA_RES, ";
+                $cadena_sql.="' ' PLA_ESTADO, ";
+                $cadena_sql.="co_tipo_contacto DATO_B_EMAIL, ";
+                $cadena_sql.="co_VALOR MAIL ";
+                $cadena_sql.="FROM ";
+                $cadena_sql.=" shd_contactos,shd_informacion_basica ";
+                $cadena_sql.=" where shd_contactos.id=shd_informacion_basica.id ";
+                $cadena_sql.=" and co_tipo_contacto='EMAIL' ";
+                $cadena_sql.=" and ib_codigo_identificacion='" . $variable['identificacion'] . "' ";
+                break;
+
+            case "existenciaDatosTEL_SHD":
+                $cadena_sql = " select ";
+                $cadena_sql.=" shd_contactos.id ID, co_fecha_inicial, co_tipo_contacto, co_valor, ";
+                $cadena_sql.=" shd_informacion_basica.id ID2,ib_fecha_inicial,ib_codigo_identificacion ";
+                $cadena_sql.=" from shd_contactos, shd_informacion_basica ";
+                $cadena_sql.=" where ib_codigo_identificacion ='" . $variable['identificacion'] . "'";
+                $cadena_sql.=" and shd_contactos.id=shd_informacion_basica.id ";
+                $cadena_sql.=" and co_tipo_contacto='TEL'";
+                break;
+
+            case "existenciaDatosDIR_SHD":
+                $cadena_sql = " select ";
+                $cadena_sql.=" shd_contactos.id ID, co_fecha_inicial, co_tipo_contacto, co_valor, ";
+                $cadena_sql.=" shd_informacion_basica.id ID2,ib_fecha_inicial,ib_codigo_identificacion ";
+                $cadena_sql.=" from shd_contactos, shd_informacion_basica ";
+                $cadena_sql.=" where ib_codigo_identificacion ='" . $variable['identificacion'] . "' ";
+                $cadena_sql.=" and shd_contactos.id=shd_informacion_basica.id ";
+                $cadena_sql.=" and co_tipo_contacto='DIR'";
+                break;
+
+            case "existenciaDatosEMAIL_SHD":
+                $cadena_sql = " select ";
+                $cadena_sql.=" shd_contactos.id ID, co_fecha_inicial, co_tipo_contacto, co_valor, ";
+                $cadena_sql.=" shd_informacion_basica.id ID2, ib_fecha_inicial, ib_codigo_identificacion ";
+                $cadena_sql.=" from shd_contactos, shd_informacion_basica ";
+                $cadena_sql.=" where ib_codigo_identificacion ='" . $variable['identificacion'] . "' ";
+                $cadena_sql.=" and shd_contactos.id=shd_informacion_basica.id ";
+                $cadena_sql.=" and co_tipo_contacto='EMAIL'";
+                break;
+
+            case "actualizaDatosTEL":
+                $cadena_sql = " update ";
+                $cadena_sql.=" shd_contactos set co_valor='" . $variable['telefono'] . "' ";
+                $cadena_sql.=" where ID='" . $variable['ID'] . "' and co_tipo_contacto='TEL'";
+                break;
+
+            case "actualizaDatosDIR":
+                $cadena_sql = " update ";
+                $cadena_sql.=" shd_contactos set co_valor='" . $variable['direccion'] . "' ";
+                $cadena_sql.=" where ID='" . $variable['ID'] . "' and co_tipo_contacto='DIR'";
+                break;
+
+            case "actualizaDatosEMAIL":
+                $cadena_sql = " update ";
+                $cadena_sql.=" shd_contactos set co_valor='" . $variable['email'] . "' ";
+                $cadena_sql.=" where ID='" . $variable['ID'] . "' and co_tipo_contacto='EMAIL'";
+                break;
+
+            case "insertaDatosEMAIL":
+                $cadena_sql = " insert into shd_contactos values ";
+                $cadena_sql.=" ('" . $variable['ID'] . "','" . $variable['co_fecha_inicial'] . "','EMAIL','1','','" . $variable['email'] . "','')";
+                break;
+
+            case "insertaDatosDIR":
+                $cadena_sql = " insert into shd_contactos values ";
+                $cadena_sql.=" ('" . $variable['ID'] . "','" . $variable['co_fecha_inicial'] . "','DIR','1','','" . $variable['direccion'] . "','')";
+                break;
+
+            case "insertaDatosTEL":
+                $cadena_sql = " insert into shd_contactos values ";
+                $cadena_sql.=" ('" . $variable['ID'] . "','" . $variable['co_fecha_inicial'] . "','TEL','1','','" . $variable['telefono'] . "','')";
+                break;
+
+            case "actualizaDatosDIR_PEEMP":
+                $cadena_sql = " update peemp set emp_direccion='" . $variable['direccion'] . "' ";
+                $cadena_sql.= " where emp_nro_iden='" . $variable['identificacion'] . "'";
+                break;
+
+            case "actualizaDatosTEL_PEEMP":
+                $cadena_sql = " update peemp set emp_telefono='" . $variable['telefono'] . "' ";
+                $cadena_sql.= " where emp_nro_iden='" . $variable['identificacion'] . "'";
+                break;
+
+            case "actualizaDatosEMAIL_PEEMP":
+                $cadena_sql = " update peemp set emp_email='" . $variable['email'] . "' ";
+                $cadena_sql.= " where emp_nro_iden='" . $variable['identificacion'] . "'";
                 break;
         }
         //echo $cadena_sql."<br>";

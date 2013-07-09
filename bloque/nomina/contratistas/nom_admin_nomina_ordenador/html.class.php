@@ -64,7 +64,7 @@ class html_adminNominaOrdenador extends funciones_adminNominaOrdenador {
 							<tr>
 								<td>
 									<table class="bordered"  width="100%" >
-										<tr class='encabezado_registro'>
+										<tr class='cuadro_color'>
                                                                                         <th width="5%">Código</th>
 											<th width="10%">Rubro</th>
 											<th width="10%">Año</th>

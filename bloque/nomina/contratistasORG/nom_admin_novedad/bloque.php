@@ -1,9 +1,9 @@
 <?
 /*--------------------------------------------------------------------------------------------------------------------------
- @ Derechos de Autor: Vea el archivo LICENCIA.txt que viene con la distribucion
+  @ Derechos de Autor: Vea el archivo LICENCIA.txt que viene con la distribucion
 ---------------------------------------------------------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------------------------------
- * @name          bloque.php
+* @name          bloque.php 
 * @author        Paulo Cesar Coronado
 * @revision      Última revisión 12 de enero de 2009
 /*--------------------------------------------------------------------------------------------------------------------------
@@ -15,14 +15,14 @@
 * @author			Oficina Asesora de Sistemas
 * @link			N/D
 * @description  	Bloque para gestionar las novedades del sistema de contratación. Implementa los casos
-*			de uso:
+*			de uso: 
 *			Consultar novedades de contratista
 *			Registrar novedad de contratista
 /*--------------------------------------------------------------------------------------------------------------------------*/
 if(!isset($GLOBALS["autorizado"]))
 {
 	include("../index.php");
-	exit;
+	exit;		
 }
 
 include_once($configuracion["raiz_documento"].$configuracion["clases"]."/bloque.class.php");
@@ -32,75 +32,75 @@ include_once("sql.class.php");
 
 
 //Clase
-class bloquereporteFinanciero extends bloque
+class bloqueAdminNovedad extends bloque
 {
 
-	public function __construct($configuracion)
+	 public function __construct($configuracion)
 	{
-		$this->sql = new sql_reporteFinanciero();
-		$this->funcion = new funciones_reporteFinanciero($configuracion, $this->sql);
-			
+ 		$this->sql = new sql_adminNovedad();
+ 		$this->funcion = new funciones_adminNovedad($configuracion, $this->sql);
+ 		
 	}
-
-
+	
+	
 	function html($configuracion)
-	{
+	{		
 		//Rescatar datos de sesion
 		$usuario = $this->funcion->rescatarValorSesion($configuracion, $this->funcion->acceso_db, "usuario");
 		$id_usuario = $this->funcion->rescatarValorSesion($configuracion, $this->funcion->acceso_db, "id_usuario");
 		$_REQUEST['opcion']=(isset($_REQUEST['opcion'])?$_REQUEST['opcion']:'');
-		$vigencia=(isset($_REQUEST['vigencia'])?$_REQUEST['vigencia']:date('Y'));
-		$tema=(isset($tema)?$tema:'');
-
-                
-		switch ($_REQUEST['opcion'])
-		{
-			case 'buscar':
-				//Consultar usuario
-                                $reporte=array('nombre'=>$_REQUEST['reporte'] );
-                                $this->funcion->listaRegistro($configuracion,$reporte);
+                $vigencia=(isset($_REQUEST['vigencia'])?$_REQUEST['vigencia']:date('Y'));
+                $tema=(isset($tema)?$tema:'');
+                switch ($_REQUEST['opcion'])
+		{ 
+			case 'consultar':
+		  		//Consultar usuario
+				$this->funcion->consultarContratista($_REQUEST["interno_oc"],$_REQUEST["cod_contrato"],$vigencia);
 				break;
-                            
-      			case 'generar':
-				//Consultar usuario
-                            
-                                $reporte=array('nombre'=>$_REQUEST['reporte'] );
-                                
-                                $this->funcion->listaRegistro($configuracion,$reporte);
-                                $this->funcion->generarReporte($reporte);
-                                
-				break;    
-
+                        
+                        case 'crearNovedad':
+		  		//Consultar usuario
+                                  //var_dump($_REQUEST);
+				$this->funcion->crearNovedad();
+				break;
+                        
+                        
 			default:
-				//Consultar novedad
-				$this->funcion->htmlReporte->bienvenida();
-				break;
-
+		  		//Consultar novedad
+				$this->funcion->consultarContratista("","",$vigencia);
+				break;	
+				
 		}//fin switch
-
+		
 	}// fin funcion html
-
-
+	
+	
 	function action($configuracion)
 	{
 		switch($_REQUEST['opcion'])
-		{
-			case 'nuevo':
-				//Consultar usuario
+		{	
+                    case 'nuevo':
+		  		//Consultar usuario
 				$this->funcion->registrarNovedad();
 				break;
-
-			default:
-				//recupera los datos para realizar la busqueda de usuario
+                    
+                           
+                            
+                          
+                    default: 
+				//recupera los datos para realizar la busqueda de usuario				
 				$pagina = $configuracion["host"].$configuracion["site"]."/index.php?";
-				$variable = "pagina=".$_REQUEST["pagina"];
-				
-                                foreach($_REQUEST as $key=>$value)
-                                    {   if(!isset($_REQUEST[$configuracion['enlace']]) && $key!='action')
-                                            {$variable .= "&$key=".$_REQUEST[$key];}
-                                    }
-				
-                                include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
+				$variable = "pagina=nom_adminNovedad";
+				$variable .= "&opcion=".$_REQUEST["opcion"];
+				$variable .= "&vigencia=".$_REQUEST["vigencia"];
+				if(isset($_REQUEST['clave']))
+					{
+					$variable .= "&clave=".$_REQUEST["clave"];
+					}
+				if(isset($_REQUEST['criterio_busqueda'])){
+                                        $variable .= "&criterio_busqueda=".$_REQUEST["criterio_busqueda"];
+                                }
+				include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
 				$this->cripto = new encriptar();
 				$variable = $this->cripto->codificar_url($variable,$configuracion);
 				echo "<script>location.replace('".$pagina.$variable."')</script>";
@@ -108,32 +108,28 @@ class bloquereporteFinanciero extends bloque
 				break;
 		}//fin switch
 	}//fin funcion action
-
-
+	
+	
 }// fin clase bloquenom_adminNovedad
 
 
 // @ Crear un objeto bloque especifico
 
-$esteBloque = new bloquereporteFinanciero($configuracion);
-//var_dump($_REQUEST);//exit;
+$esteBloque = new bloqueAdminNovedad($configuracion);
+
 
 if(isset($_REQUEST['cancelar']))
-{
-	unset($_REQUEST['action']);
+{   unset($_REQUEST['action']);		
 	$pagina = $configuracion["host"].$configuracion["site"]."/index.php?";
-	$variable = "pagina=".$_REQUEST["pagina"];
-        $variable .= "&opcion=".$_REQUEST["opcion"];
-        $variable .= "&reporte=".$_REQUEST["reporte"];
-        $variable .= "&vigencia=".$_REQUEST["vigencia"];
-        $variable .= "&unidad=".$_REQUEST["unidad"];
+	$variable = "pagina=nom_adminNovedad";
+	$variable .= "&opcion=consultar";
 	include_once($configuracion["raiz_documento"].$configuracion["clases"]."/encriptar.class.php");
 	$this->cripto = new encriptar();
 	$variable = $this->cripto->codificar_url($variable,$configuracion);
-
+	
 	echo "<script>location.replace('".$pagina.$variable."')</script>";
 }
-//var_dump($_REQUEST);//exit;
+//var_dump($_REQUEST);exit;
 //echo "action".$_REQUEST['action'];exit;
 if(!isset($_REQUEST['action']))
 {
@@ -142,7 +138,7 @@ if(!isset($_REQUEST['action']))
 else
 {
 	$esteBloque->action($configuracion);
-        
+
 }
 
 

@@ -74,12 +74,47 @@ class bloque_adminVinculacion extends bloque {
 
                 foreach ($_REQUEST as $key => $value) {
                     if ($key != 'action' && $key != 'opcion') {
-
                         $respuestas_encuesta[$key] = $_REQUEST[$key];
                     }
                 }
 
                 $this->funcion->insertarDatos($respuestas_encuesta);
+                break;
+
+            case "actualizar":
+
+                $datos_actualizar = array();
+
+                foreach ($_REQUEST as $key => $value) {
+                    if ($key != 'action' && $key != 'opcion') {
+                        $datos_actualizar[$key] = $_REQUEST[$key];
+                    }
+                }
+
+                $this->funcion->actualizarDatosBasicos($datos_actualizar);
+                break;
+
+            case "actualizarRespuestas":
+
+                $respuestas_encuesta_a = array();
+
+                foreach ($_REQUEST as $key => $value) {
+                    if ($key != 'action' && $key != 'opcion') {
+                        $respuestas_encuesta_a[$key] = $_REQUEST[$key];
+                    }
+                }
+
+                $this->funcion->actualizarRespuestas($respuestas_encuesta_a);
+                break;
+
+
+
+            default :
+                $pagina = $this->configuracion["host"] . $this->configuracion["site"] . "/index.php?";
+                $variable = "pagina=asistenteTributario";
+                $variable .= "&opcion=";
+                $variable = $this->funcion->cripto->codificar_url($variable, $this->configuracion);
+                echo "<script>location.replace('" . $pagina . $variable . "')</script>";
                 break;
         }
     }

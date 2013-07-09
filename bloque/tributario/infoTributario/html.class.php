@@ -55,8 +55,8 @@ class html_infoTributario {
         $ap2 = $_REQUEST['ap2'];
         $id = $_REQUEST['identificacion'];
         $id_tipo = $_REQUEST['id_tipo'];
- 
-     
+
+
         //echo '-'.$vigencia; echo '<br>';
         //echo '-'.$vinculacion = $_REQUEST['vinculacion'];echo '<br>';
         //echo '-'.$estado = $_REQUEST['estado'];echo '<br>';
@@ -71,7 +71,7 @@ class html_infoTributario {
         //Datos traidos desde postgres
         ?>
 
-        <link href = "<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/nomina/cuotas_partes/cuentaCobro/cuentaC.css" rel = "stylesheet" type = "text/css" />
+        <link href = "<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/tributario/infoTributario/cuentaC.css" rel = "stylesheet" type = "text/css" />
 
         <center> <table class='bordered'  width ="85%">
 
@@ -109,7 +109,7 @@ class html_infoTributario {
                             <br>Ciudad
                             <br><br><br>
 
-                            Yo <? echo $nombre . ' ' .$nombre2.' '.$apellido. ' ' . $ap2 ?>, por medio de la presente y para dar cumplimiento al artículo 1° 
+                            Yo <? echo $nombre . ' ' . $nombre2 . ' ' . $apellido . ' ' . $ap2 ?>, por medio de la presente y para dar cumplimiento al artículo 1° 
                             del decreto 1070 de 2013, me permito informar bajo la gravedad de juramento lo siguiente:
                             <br><br>
                         </td>
@@ -163,7 +163,7 @@ class html_infoTributario {
                         <td class='estilo_td2 texto_elegante2' colspan='4'>
                             <?
                             echo '<br>';
-                            echo 'Nombre: ' . $nombre . ' ' .$nombre2.' '. $apellido . ' ' . $ap2;
+                            echo 'Nombre: ' . $nombre . ' ' . $nombre2 . ' ' . $apellido . ' ' . $ap2;
                             echo '<br>';
                             echo 'Identificación: ' . $id;
                             if ($tipo_id = 1)
@@ -225,22 +225,11 @@ class html_infoTributario {
 
         $fecha_registro = strtotime($datos_respu[0]['resp_fec_registro']);
 
-        // var_dump($datos_respu);
-        //echo '-'.$vigencia; echo '<br>';
-        //echo '-'.$vinculacion = $_REQUEST['vinculacion'];echo '<br>';
-        //echo '-'.$estado = $_REQUEST['estado'];echo '<br>';
-        //echo '-'.$contrato = $_REQUEST['contrato'];echo '<br>';
-        //echo '-'.$nombre = $_REQUEST['nombre'];echo '<br>';
-        //echo '-'.$apellido = $_REQUEST['apellido'];echo '<br>';
-        //echo '-'.$ap2 = $_REQUEST['ap2'];echo '<br>';
-        //echo '-'.$id = $_REQUEST['identificacion'];echo '<br>';
-        //echo '-'.$id_tipo = $_REQUEST['id_tipo'];echo '<br>';
-        //echo "aqui estoy";
-        //exit;
         //Datos traidos desde postgres
         ?>
 
-        <link href = "<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/nomina/cuotas_partes/cuentaCobro/cuentaC.css" rel = "stylesheet" type = "text/css" />
+        <link href = "<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/tributario/infoTributario/cuentaC.css" rel = "stylesheet" type = "text/css" />
+
 
         <center> <table class='bordered'  width ="85%">
 
@@ -278,7 +267,7 @@ class html_infoTributario {
                             <br>Ciudad
                             <br><br><br>
 
-                            Yo <? echo $nombre . ' ' .$nombre2.' '. $apellido . ' ' . $ap2 ?>, por medio de la presente y para dar cumplimiento al artículo 1° 
+                            Yo <? echo $nombre . ' ' . $nombre2 . ' ' . $apellido . ' ' . $ap2 ?>, por medio de la presente y para dar cumplimiento al artículo 1° 
                             del decreto 1070 de 2013, me permito informar bajo la gravedad de juramento lo siguiente:
                             <br><br>
                         </td>
@@ -299,28 +288,18 @@ class html_infoTributario {
                     </tr>
 
                     <?
-                    //var_dump($datos_pre);
-                    //exit;
-                    //  for ($i=1;$i<5;$i++)
-                    //{
-                    //   echo $datos_respu[$i][resp_respuesta];
-                    //  echo '<br>';
-                    //}
-                    //  exit;
-
                     foreach ($datos_pre as $key => $dato) {
                         $id_pregunta = (isset($dato['preg_id']) ? $dato['preg_id'] : '');
                         $pregunta = (isset($dato['preg_nombre']) ? $dato['preg_nombre'] : '');
                         $id_encuesta = (isset($dato['form_enc_id']) ? $dato['form_enc_id'] : '');
-
-
+                        
                         echo "<tr>";
                         echo "<td class='texto_elegante2 estilo_td' align=center width=30 >" . $id_pregunta . "</td>";
                         echo "<td class='texto_elegante estilo_td' width=500>" . $pregunta . "</td>";
                         echo "
                         <td class='texto_elegante estilo_td' width=50 style='text-align: center; vertical-align: middle;'>
                         <input type='hidden' name='id_pregunta" . $id_pregunta . "' value='$id_pregunta'>
-                        <input type='radio' name='respuesta_" . $id_pregunta . "' disabled value='SI'";
+                        <input type='radio' name='respuesta_" . $id_pregunta . "' value='SI'";
 
                         if ($datos_respu[$key]['resp_respuesta'] == 'SI') {
                             echo "checked>";
@@ -333,7 +312,7 @@ class html_infoTributario {
                         echo "
                         <td class='texto_elegante estilo_td' width=50 style='text-align: center; vertical-align: middle;'>
                         <input type='hidden' name='id_pregunta" . $id_pregunta . "' value='$id_pregunta'>
-                        <input type='radio' name='respuesta_" . $id_pregunta . "' disabled value='NO'";
+                        <input type='radio' name='respuesta_" . $id_pregunta . "' value='NO'";
 
                         if ($datos_respu[$key]['resp_respuesta'] == 'NO') {
                             echo "checked>";
@@ -350,7 +329,7 @@ class html_infoTributario {
                         <td class='estilo_td2 texto_elegante2' colspan='4'>
                             <?
                             echo '<br>';
-                            echo 'Nombre: ' . $nombre . ' ' .$nombre2.' '. $apellido . ' ' . $ap2;
+                            echo 'Nombre: ' . $nombre . ' ' . $nombre2 . ' ' . $apellido . ' ' . $ap2;
                             echo '<br>';
                             echo 'Identificación: ' . $id;
                             if ($tipo_id = 1)
@@ -366,18 +345,48 @@ class html_infoTributario {
 
 
                     <center>
-
-
-                        <a href="<?
-                        $variable = 'pagina=asistenteTributario';
-                        $variable.='&opcion=';
-                        $variable = $this->cripto->codificar_url($variable, $this->configuracion);
-                        echo $this->indice . $variable;
-                        ?>" >    
-                            <img alt="Ir a Formulario" src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/tributario/IconSummary-blue.jpg" /></a> 
+                        <input id="registrarBoton" type="submit" class="navbtn"  value="Actualizar" > 
                     </center>
 
+                    <input type='hidden' name='opcion' value='actualizarRespuestas'>
+                    <input type='hidden' name='action' value='<? echo $this->formulario; ?>'>
+
+
+                    <input type='hidden' name='func_documento' value='<? echo $id ?>'>
+                    <input type='hidden' name='tipo_documento' value='<? echo $id_tipo ?>'>
+                    <input type='hidden' name='annio' value='<? echo $vigencia ?>'>
+                    <input type='hidden' name='contrato' value='<? echo $contrato ?>'>
+                    <input type='hidden' name='fecha_registro' value='<? echo date('d/m/Y') ?>'>
+                    <input type='hidden' name='id_encuesta' value='<? echo $id_encuesta ?>'>
+
                     <br>
+
+                    <br>
+
+
+
+                    <? /* Para deshabilitar cambiar las respuestas, añadir disable a radio buttons
+                     * comentariar mètodos de envio de datos y descomentariar envio de formulario
+
+
+                      <center>
+
+
+                      <a href="<?
+                      $variable = 'pagina=asistenteTributario';
+                      $variable.='&opcion=';
+                      $variable = $this->cripto->codificar_url($variable, $this->configuracion);
+                      echo $this->indice . $variable;
+                      ?>" >
+                      <img alt="Ir a Formulario" src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/tributario/IconSummary-blue.jpg" /></a>
+                      </center>
+
+                      <br>
+
+
+                     */ ?>
+
+
                     </td>
                     </tr>
 
