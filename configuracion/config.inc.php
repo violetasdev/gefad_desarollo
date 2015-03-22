@@ -1,12 +1,12 @@
 <?php
 /*
-WQI55POzSFHRzd2bVg
-WgJTnvOzSFGBum9pQyPCfxI
-XAI9efOzSFF9WuGWB2Ba65EzkQ
-XQKM1fOzSFHIe3ub8Mf-1Fse0w
-XwLSGvOzSFFeqsQIVUE_zkZzXsYrFr4
-YAJArPOzSFFrfEAfIS1EcQ
-*/
+LgG7dPYN2VRXIaBIHA
+MAGOBPYN2VQd4u0ajuyWKDyd
+MgHg6PYN2VRJD3nFodzE5JQjIA
+NAEoX_YN2VQf0HjS
+NgEIm_YN2VSeIa6MIW4nx-recQ
+OAFg0vYN2VQgQnU1-sAYHg
+*/ 
 
 // Listado de posibles fuentes para la dirección IP, en orden de prioridad
         	$fuentes_ip = array(

@@ -18,6 +18,7 @@ Jairo Lavado
 Copyright (C) 2001-2008
 
 Última revisión 2 de Diciembre de 2008
+Última revisión 28 de Junio de 2013 - Guardar el host 
 
 *****************************************************************************
 * @subpackage   
@@ -46,11 +47,14 @@ class log
 			$this->esta_sesion=$this->nueva_sesion->numero_sesion();
 			//Rescatar el valor de la variable usuario de la sesion
 			$usuario=$this->nueva_sesion->rescatar_valor_sesion($configuracion,"id_usuario");
-			if($usuario)
-			{
-				
-				$id_usuario=$usuario[0][0];
-			}
+		     
+                        if($usuario)
+                            {  $id_usuario=$usuario[0][0];
+                            }
+                         else   
+                            {$id_usuario=1;}
+                        $host=$this->obtenerIP();
+                        
 			$cadena_sql="INSERT INTO ";
 			$cadena_sql.=$configuracion["prefijo"]."log_usuario "; 
 			$cadena_sql.="( "; 
@@ -60,7 +64,8 @@ class log
 			$cadena_sql.="`tipo_registro`, "; 
 			$cadena_sql.="`nombre_registro`, ";
 			$cadena_sql.="`fecha_log`, "; 
-			$cadena_sql.="`descripcion` ";
+			$cadena_sql.="`descripcion` ,";
+                        $cadena_sql.="`host` ";
 			$cadena_sql.=") "; 
 			$cadena_sql.="VALUES ";
 			$cadena_sql.="( "; 
@@ -70,9 +75,11 @@ class log
 			$cadena_sql.="'".$registro[2]."', ";
 			$cadena_sql.="'".$registro[3]."', ";
 			$cadena_sql.="'".date("F j, Y, g:i a")."', ";
-			$cadena_sql.="'".$registro[5]."' "; 
-		   echo '<br>';     $cadena_sql.=")"; 
-			//$cadena_sql;exit;
+			$cadena_sql.="'".$registro[5]."', "; 
+                        $cadena_sql.="'".$host."' "; 
+                        $cadena_sql.=")"; 
+                        
+			//echo $cadena_sql;exit;
  
 			$acceso_db->registro_db($cadena_sql,0);
 			$resultado=$acceso_db->obtener_registro_db();
@@ -80,6 +87,21 @@ class log
 		unset($acceso_db);
 		unset($this->nueva_sesion);
 	}
+        
+        
+        
+
+        function obtenerIP() {
+            if (!empty($_SERVER['HTTP_CLIENT_IP']))
+                return $_SERVER['HTTP_CLIENT_IP'];
+
+            if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+                return $_SERVER['HTTP_X_FORWARDED_FOR'];
+
+            return $_SERVER['REMOTE_ADDR'];
+        }
+
+
 
 }
 ?>
