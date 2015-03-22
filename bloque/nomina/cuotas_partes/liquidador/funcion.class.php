@@ -81,15 +81,15 @@ class funciones_liquidador extends funcionGeneral {
         if (is_array($sustitutos)) {
             foreach ($sustitutos as $key => $value) {
                 $contenido1.= "<tr> <td class='texto_elegante estilo_td' >Nombre Sustituto:</td>";
-                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_nombresus'] . "</td>";
+                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_nombresus'] . "</td>";
                 $contenido1.= "<td class='texto_elegante estilo_td' >Documento Sustituto:</td>";
-                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_cedulasus'] . "</td></tr>";
+                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_cedulasus'] . "</td></tr>";
             }
         } else {
             $contenido1.= "<tr> <td class='texto_elegante estilo_td' >Nombre Sustituto:</td>";
-            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp; </td>";
+            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp; </td>";
             $contenido1.= "<td class='texto_elegante estilo_td' >Documento Sustituto:</td>";
-            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp;</td></tr>";
+            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp;</td></tr>";
         }
 
 
@@ -285,7 +285,7 @@ class funciones_liquidador extends funcionGeneral {
 
 
 
-        $PDF = new HTML2PDF('P', 'Letter', 'es', true, 'UTF-8', array(30,20,15,2));
+        $PDF = new HTML2PDF('P', 'Letter', 'es', true, 'UTF-8', array(30, 20, 15, 2));
         $PDF->pdf->SetDisplayMode('fullpage');
         $PDF->writeHTML($ContenidoPdf);
         clearstatcache();
@@ -348,18 +348,18 @@ class funciones_liquidador extends funcionGeneral {
                 $contenido2.=" </tr>";
             }
         } else {
-                $contenido2.=" <tr> ";
-                $contenido2.="      <td colspan='1'>Nombre Sustituto:</td> ";
-                $contenido2.="      <td colspan='1'></td> ";
-                $contenido2.="      <td colspan='1'>Documento Sustituto:</td> ";
-                $contenido2.="      <td colspan='1'></td> ";
-                $contenido2.=" </tr> ";
-                $contenido2.=" <tr> ";
-                $contenido2.="      <td colspan='1'>Fecha Nacimiento Sustituto:</td> ";
-                $contenido2.="      <td colspan='1'></td> ";
-                $contenido2.="      <td colspan='1'>Resolución de Sustitución:</td> ";
-                $contenido2.="      <td colspan='1'></td> ";
-                $contenido2.=" </tr>";            
+            $contenido2.=" <tr> ";
+            $contenido2.="      <td colspan='1'>Nombre Sustituto:</td> ";
+            $contenido2.="      <td colspan='1'></td> ";
+            $contenido2.="      <td colspan='1'>Documento Sustituto:</td> ";
+            $contenido2.="      <td colspan='1'></td> ";
+            $contenido2.=" </tr> ";
+            $contenido2.=" <tr> ";
+            $contenido2.="      <td colspan='1'>Fecha Nacimiento Sustituto:</td> ";
+            $contenido2.="      <td colspan='1'></td> ";
+            $contenido2.="      <td colspan='1'>Resolución de Sustitución:</td> ";
+            $contenido2.="      <td colspan='1'></td> ";
+            $contenido2.=" </tr>";
         }
 
         $ContenidoPdf = "
@@ -457,14 +457,18 @@ class funciones_liquidador extends funcionGeneral {
         <td colspan='2'>" . $datos_pensionado[0]['FECHA_NAC'] . "</td>
     </tr>
     <tr>
-        <td colspan='2'>Resolución Reconocimiento Concurrencia:</td>
-        <td colspan='2'>" . $datos_concurrencia[0]['dcp_actoadmin'] . "</td>
+        <td colspan='1'>Resolución Reconocimiento Concurrencia:</td>
+        <td colspan='1'>" . $datos_concurrencia[0]['dcp_actoadmin'] . "</td>
+        <td colspan='1'>Fecha Resolución Reconocimiento:</td>
+        <td colspan='1'>" . $datos_concurrencia[0]['dcp_factoadmin'] . "</td>
     </tr>
-    <tr>
-        <td colspan='2'>Fecha de Efectividad:</td>
-        <td colspan='2'>" . date('d/m/Y', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_factoadmin']))) . "</td>
+     <tr>
+        <td colspan='1'>Fecha Resolución Pensión:</td>
+        <td colspan='1'>" . $datos_concurrencia[0]['dcp_resol_pension_fecha'] . "</td>
+        <td colspan='1'>Fecha Pensión:</td>
+        <td colspan='1'>" . $datos_concurrencia[0]['dcp_fecha_pension'] . "</td>
     </tr>
-    <tr>
+        <tr>
         <td colspan='2'>Fecha Inicio de Concurrencia:</td>
         <td colspan='2'>" . date('d/m/Y', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_pension']))) . "</td>
     </tr>
@@ -570,15 +574,15 @@ class funciones_liquidador extends funcionGeneral {
         if (is_array($sustitutos)) {
             foreach ($sustitutos as $key => $value) {
                 $contenido1.= "<tr> <td class='texto_elegante estilo_td' >Nombre Sustituto:</td>";
-                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_nombresus'] . "</td>";
+                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_nombresus'] . "</td>";
                 $contenido1.= "<td class='texto_elegante estilo_td' >Documento Sustituto:</td>";
-                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_cedulasus'] . "</td></tr>";
+                $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp;" . $sustitutos[$key]['sus_cedulasus'] . "</td></tr>";
             }
         } else {
             $contenido1.= "<tr> <td class='texto_elegante estilo_td' >Nombre Sustituto:</td>";
-            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp; </td>";
+            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp; </td>";
             $contenido1.= "<td class='texto_elegante estilo_td' >Documento Sustituto:</td>";
-            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:left;'>&nbsp;&nbsp;</td></tr>";
+            $contenido1.= "<td class='texto_elegante estilo_td' style='text-align:right'>&nbsp;&nbsp;</td></tr>";
         }
 
 
@@ -624,9 +628,9 @@ class funciones_liquidador extends funcionGeneral {
                 $contenido2.="<td style='text-align:center;'>$ " . number_format($totales_liquidacion[$key]['liq_incremento'], 2, ',', '.') . "</td>";
                 $contenido2.="<td style='text-align:center;'>$ " . number_format($totales_liquidacion[$key]['liq_interes_a2006'], 2, ',', '.') . "</td>";
                 $contenido2.="<td style='text-align:center;'>$ " . number_format($totales_liquidacion[$key]['liq_interes_d2006'], 2, ',', '.') . "</td>";
-                $contenido2.="<td style='text-align:center;'>$ " . number_format($totales_liquidacion[$key]['liq_total'], 2, ',', '.') . "</td>";
+                $contenido2.="<td style='text-align:center;'>$ " . number_format($totales_liquidacion[$key]['liq_interes'], 2, ',', '.') . "</td>";
                 $contenido2.="</tr>";
-                $total2 = $totales_liquidacion[$key][12];
+                $total2 = $totales_liquidacion[$key]['liq_total'];
             }
         } else {
             $contenido2.="<tr>";
@@ -791,7 +795,7 @@ class funciones_liquidador extends funcionGeneral {
             <th>INCREMENTO SALUD</th>
             <th>INTERES LEY 68/1923</th>
             <th>INTERES LEY 1066/2006</th>
-            <th>ACUMULADO</th>
+            <th>ACUMULADO INTERES</th>
         </tr>
         </thead>
         <tbody>
@@ -799,7 +803,7 @@ class funciones_liquidador extends funcionGeneral {
             </tbody>
             
 <tr>
-        <th colspan = \"1\">TOTAL&nbsp;&nbsp;</th>
+        <th colspan = \"1\">TOTAL<br>LIQUIDADO</th>
             <td  colspan=\"8\" style='text-align:center'>$" . number_format($total2) . "</td>
         </tr>
         </table>
@@ -1637,13 +1641,10 @@ class funciones_liquidador extends funcionGeneral {
 
         $porcentaje_cuota = $datos_concurrencia[0]['dcp_porcen_cuota'];
 
-        //$fecha_pension = date('d/m/Y', strtotime(str_replace('/', '-', $datos_concurrencia[0][7])));
-        //$fecha_pension = date('d/m/Y', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia'])));
         $mesada_descripcion = doubleval($datos_concurrencia[0]['dcp_valor_mesada']);
 
 
         ///Aplicando Ley 4, que dice que la primera vez de liquidación, se debe cunplir que la persona cumplió un año de pensionado para poder aplicarle el ajuste.
-        //$fecha_pension2 = date('Y', strtotime(str_replace('/', '-', $datos_concurrencia[0][7])));
         $fecha_pension = date('d/m/Y', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia'])));
 
         //para esas mensualidades, el valor será 0
@@ -1654,10 +1655,16 @@ class funciones_liquidador extends funcionGeneral {
         $INTERESES = 0;
 
         $liquidacion_cp = array();
-        //$mesada = $this->mesadaPeriodo($mesada_descripcion, $fecha_pension, $f_desde);
-        $mesada_inicial = $mesada_descripcion;
+        // La siguiente funcion es para calcular 
 
+        $f_liquidar = strtotime(str_replace('/', '-', $datos_liquidar['liquidar_desde']));
+        $f_pensionar = strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia']));
 
+        if ($f_liquidar > $f_pensionar) {
+            $mesada_inicial = $this->mesadaPeriodo($mesada_descripcion, $fecha_pension, $f_desde);
+        } else {
+            $mesada_inicial = $mesada_descripcion;
+        }
         //PARA EL CRUCE DE LOS PAGOS :S
         //traer los pagos
 
@@ -1695,26 +1702,30 @@ class funciones_liquidador extends funcionGeneral {
 //Valor Indices Básicos
             $fecha_liq = strtotime(str_replace('/', '-', $FECHAS[$key]));
             $fecha_pension2 = strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia'] . "+ 1 year"));
-
+            $anio_pension = date('Y', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia'] . "+ 1 year")));
+            $mes_pension = date('m', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia'])));
 
             if ($fecha_liq < $fecha_pension2) {
                 $MESADA = $mesada_descripcion;
             } else {
                 if ($key == 12) {
-                    $MESADA = $this->MesadaFecha(($FECHAS[$key]), $mesada_descripcion, $sumafija[0][0]);
+                    $MESADA = $this->MesadaFecha(($FECHAS[$key]), $mesada_descripcion);
                 } else {
-                    $MESADA = $this->MesadaFecha(($FECHAS[$key]), $mesada_inicial, $sumafija[0][0]);
+                    $MESADA = $this->MesadaFecha(($FECHAS[$key]), $mesada_inicial);
                 }
             }
 
-            if ($key == 0) {
-                //$FECHAS[$key] = $datos_concurrencia[0]['dcp_fecha_p'];
-                $dias_calculo = date('t', strtotime(str_replace('/', '-', $FECHAS[$key]))) + 1;
-                $dias_pension = date('d', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia'])));
+            if ($anio_pension == $annio && $mes == $mes_pension) {
+                if ($key == 0) {
+                    //$FECHAS[$key] = $datos_concurrencia[0]['dcp_fecha_p'];
+                    $dias_calculo = date('t', strtotime(str_replace('/', '-', $FECHAS[$key]))) + 1;
+                    $dias_pension = date('d', strtotime(str_replace('/', '-', $datos_concurrencia[0]['dcp_fecha_concurrencia'])));
 
-                $datediff = ($dias_calculo - $dias_pension);
+                    $datediff = ($dias_calculo - $dias_pension);
 
-                $MESADA = $datediff * ($mesada_inicial / ($dias_calculo - 1));
+                    $mesada_inicial = $mesada_descripcion;
+                    $MESADA = $datediff * ($mesada_inicial / ($dias_calculo - 1));
+                }
             }
 
             //Determinar Cuota Parte
@@ -1920,7 +1931,8 @@ class funciones_liquidador extends funcionGeneral {
     }
 
     function guardarLiquidacion($datos_basicos, $totales_liquidacion) {
-//Generar consecutivo liquidación
+
+        //Generar consecutivo liquidación
         $parametro = array();
         $consecutivo = $this->consecutivo($parametro);
 
@@ -1973,6 +1985,17 @@ class funciones_liquidador extends funcionGeneral {
             echo "<script type=\"text/javascript\">" .
             "alert('Gestor de Reportes');" .
             "</script> ";
+        } else {
+            echo "<script type=\"text/javascript\">" .
+            "alert('No fue posible registrar la liquidación');" .
+            "</script> ";
+            error_log('\n');
+            $pagina = $this->configuracion["host"] . $this->configuracion["site"] . "/index.php?";
+            $variable = 'pagina=liquidadorCP';
+            $variable.='&opcion=';
+            $variable = $this->cripto->codificar_url($variable, $this->configuracion);
+            echo "<script>location.replace('" . $pagina . $variable . "')</script>";
+            exit;
         }
     }
 
@@ -2020,19 +2043,29 @@ class funciones_liquidador extends funcionGeneral {
         return array($fecha);
     }
 
-    function mesadaPeriodo($mesada, $f_pension, $f_hasta) {
+    function mesadaPeriodo($mesada_inicio, $f_pension, $f_desde) {
 
-        list ($FECHAS) = $fechas = $this->GenerarFechas($f_pension, $f_hasta);
+        //Actualizar la mesada a la fecha solicitada
+        $f_desde2 = date('d/m/Y', strtotime(str_replace('/', '-', $f_desde . "- 1 year")));
+        list ($FECHAS) = $fechas = $this->GenerarFechas($f_pension, $f_desde2);
 
         foreach ($FECHAS as $key => $value) {
+
+            $fecha_liq = strtotime(str_replace('/', '-', $FECHAS[$key]));
+            $fecha_pension2 = strtotime(str_replace('/', '-', $f_pension . "+ 1 year"));
+
+            $fecha = $FECHAS[$key];
             $annio = date('Y', strtotime(str_replace('/', '-', $FECHAS[$key])));
             $mes = date('m', strtotime(str_replace('/', '-', $FECHAS[$key])));
 
-            $sumafija = $this->obtenerSumafija($annio);
-            $MESADA = $this->MesadaFecha(($FECHAS[$key]), $mesada, $sumafija[0][0]);
+            if ($fecha_liq < $fecha_pension2) {
+                $MESADA = $mesada_inicio;
+            } else {
+                $MESADA = $this->MesadaFecha(($fecha), $mesada_inicio);
 
-            if ($mes == 12) {
-                $mesada = $MESADA;
+                if ($mes == 12) {
+                    $mesada_inicio = $MESADA;
+                }
             }
         }
 
@@ -2095,11 +2128,11 @@ class funciones_liquidador extends funcionGeneral {
         return ($Incr_S);
     }
 
-    function MesadaFecha($FECHA, $Mesada, $sumafija) {
+    function MesadaFecha($FECHA, $Mesada_in) {
         $Anio = substr(date("Y", strtotime(str_replace('/', '-', $FECHA))), 0, 4);
         $Mes = substr(date("m", strtotime(str_replace('/', '-', $FECHA))), 0, 2);
 
-        $Mesada = round($Mesada);
+        $Mesada = round($Mesada_in);
 
         $INDICE = $this->obtenerIPC($Anio);
         $sumafija = $this->obtenerSumafija($Anio);
@@ -2648,7 +2681,7 @@ class funciones_liquidador extends funcionGeneral {
 //Cadena del periodo liquidar
                 $annio = date('Y', strtotime(str_replace('/', '-', $FECHAS[$key]))) + 1;
                 $mes = date('m', strtotime(str_replace('/', '-', $FECHAS[$key])));
-                $sumafija = $this->obtenerSumafija($annio);
+                //$sumafija = $this->obtenerSumafija($annio);
                 $INDICE = $this->obtenerIPC($annio);
 
 //Valor Indices Básicos
@@ -2658,7 +2691,7 @@ class funciones_liquidador extends funcionGeneral {
                 if ($fecha_liq < $fecha_pension2) {
                     $MESADA = $mesada_descripcion;
                 } else {
-                    $MESADA = $this->MesadaFecha(($FECHAS[$key]), $mesada, $sumafija[0][0]);
+                    $MESADA = $this->MesadaFecha(($FECHAS[$key]), $mesada);
                 }
 
 //Determinar Cuota Parte
