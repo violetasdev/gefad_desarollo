@@ -1,4 +1,4 @@
-<?
+<?php
 /*
   ############################################################################
   #    UNIVERSIDAD DISTRITAL Francisco Jose de Caldas                        #
@@ -16,6 +16,8 @@
   | 11/06/2013 | Violeta Sosa             | 0.0.0.1     |                                 |
   ----------------------------------------------------------------------------------------
   | 02/08/2013 | Violeta Sosa             | 0.0.0.2     |                                 |
+  ----------------------------------------------------------------------------------------
+  | 19/06/2015 | Violeta Sosa             | 0.0.0.4     | implementar asignación nueva entidad si inactiva                                |
   ----------------------------------------------------------------------------------------
  */
 
@@ -44,23 +46,63 @@ class html_formPrevisora {
 
     function mostrarRegistros($registros) {
         ?>
-        <link	href="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/nomina/cuotas_partes/formPrevisora/form_estilo.css" rel="stylesheet" type="text/css" />
-        <link rel="stylesheet" href="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/jPages-master/css/jPages.css">
-        <script src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/jPages-master/js/jPages.js"></script>
+        <link	href="<?php echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/nomina/cuotas_partes/formPrevisora/form_estilo.css" rel="stylesheet" type="text/css" />
+        <link rel="stylesheet" href="<?php echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/jPages-master/css/jPages.css">
+        <script src="<?php echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/jPages-master/js/jPages.js"></script>
         <!-- permite la paginacion-->  
 
         <!--script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script-->
         <script type="text/javascript" src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/jFilter/multifilter.js"></script>
 
         <script>
-
-            $(document).ready(function() {
+            $(document).ready(function () {
                 $('.filter').multifilter()
             })</script>
+
+
+        <script>
+            function acceptNum(e) {
+                key = e.keyCode || e.which;
+                tecla = String.fromCharCode(key).toLowerCase();
+                letras = "01234567890-";
+                especiales = [8, 39, 9];
+                tecla_especial = false
+                for (var i in especiales) {
+                    if (key == especiales[i]) {
+                        tecla_especial = true;
+                        break;
+                    }
+                }
+
+                if (letras.indexOf(tecla) == -1 && !tecla_especial) {
+                    return false;
+                }
+            }
+        </script>
+
+        <script>
+            function acceptLetter(e) {
+                key = e.keyCode || e.which;
+                tecla = String.fromCharCode(key).toLowerCase();
+                letras = "abcdefghijklmnñopqrstuvwxyzABCDEFGHIJKLMNÑOPQRSTUVWXYZ";
+                especiales = [8, 9, 32];
+                tecla_especial = false
+                for (var i in especiales) {
+                    if (key == especiales[i]) {
+                        tecla_especial = true;
+                        break;
+                    }
+                }
+
+                if (letras.indexOf(tecla) == -1 && !tecla_especial) {
+                    return false;
+                }
+            }
+        </script>
         <h1>Entidades Previsoras y Empleadoras</h1>
 
         <a href="
-        <?
+        <?php
         $variable = 'pagina=formularioPrevisora';
         $variable.='&opcion=formularioPrevisora';
         $variable = $this->cripto->codificar_url($variable, $this->configuracion);
@@ -77,7 +119,7 @@ class html_formPrevisora {
                     <div class="null"></div>
                 </div>
                 <div>
-                    <input type="text" id="p1f2c" class="fieldcontent filter" autocomplete='off' name='NIT' placeholder='NIT' data-col='NIT'>
+                    <input type="text" id="p1f2c" class="fieldcontent filter" autocomplete='off' name='NIT' placeholder='NIT' data-col='NIT' onKeyPress='return acceptNum(event)'>
                 </div>
             </div>
         </div>
@@ -90,7 +132,7 @@ class html_formPrevisora {
                     <div class="null"></div>
                 </div>
                 <div>
-                    <input type="text" id="p1f2c" class="fieldcontent filter" autocomplete='off' name='NOMBRE' placeholder='NOMBRE' data-col='NOMBRE'>
+                    <input type="text" id="p1f2c" class="fieldcontent filter" autocomplete='off' name='NOMBRE' placeholder='NOMBRE' data-col='NOMBRE' onKeyPress='return acceptLetter(event)'>
                 </div>
             </div>
         </div>
@@ -117,7 +159,7 @@ class html_formPrevisora {
         </thead>
         <tbody id="itemContainer">
             <tr>
-                <?
+                <?php
                 if (is_array($registros)) {
                     foreach ($registros as $key => $value) {
                         echo "<tr>";
@@ -161,10 +203,10 @@ class html_formPrevisora {
                 ?>
         </table >     
         <center><div class="holder" style="-moz-user-select: none;"></div></center>
-        <?
+        <?php
     }
 
-    function formularioPrevisora($depto, $mun) {
+    function formularioPrevisora($depto, $mun, $datos_previsora) {
 
         $this->formulario = "formPrevisora";
 
@@ -173,30 +215,30 @@ class html_formPrevisora {
         include_once($this->configuracion["raiz_documento"] . $this->configuracion["clases"] . "/encriptar.class.php");
         ?>
         <!referencias a estilos y plugins>
-        <script type="text/javascript" src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/datepicker/js/datepicker.js"></script>
-        <link	href="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/nomina/cuotas_partes/formPrevisora/form_estilo.css"	rel="stylesheet" type="text/css" />
+        <script type="text/javascript" src="<?php echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/datepicker/js/datepicker.js"></script>
+        <link	href="<?php echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/nomina/cuotas_partes/formPrevisora/form_estilo.css"	rel="stylesheet" type="text/css" />
         <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 
         <script>
-            function acceptNum(e) {
-                key = e.keyCode || e.which;
-                tecla = String.fromCharCode(key).toLowerCase();
-                letras = "01234567890-";
-                especiales = [8, 39, 9];
-                tecla_especial = false
-                for (var i in especiales) {
-                    if (key == especiales[i]) {
-                        tecla_especial = true;
-                        break;
-                    }
-                }
+                        function acceptNum(e) {
+                            key = e.keyCode || e.which;
+                            tecla = String.fromCharCode(key).toLowerCase();
+                            letras = "01234567890-";
+                            especiales = [8, 39, 9];
+                            tecla_especial = false
+                            for (var i in especiales) {
+                                if (key == especiales[i]) {
+                                    tecla_especial = true;
+                                    break;
+                                }
+                            }
 
-                if (letras.indexOf(tecla) == -1 && !tecla_especial) {
-                    return false;
-                }
-            }
+                            if (letras.indexOf(tecla) == -1 && !tecla_especial) {
+                                return false;
+                            }
+                        }
         </script>
 
         <script language = "Javascript">
@@ -317,6 +359,17 @@ class html_formPrevisora {
                     return false;
                 }
             }
+
+            function showDiv(elem) {
+                if (elem.value == 'INACTIVA') {
+                    $('#sucesora').attr('required');
+                    document.getElementById('oculto').style.display = "block";
+                }
+                if (elem.value == 'ACTIVA') {
+                    document.getElementById('oculto').style.display = "none";
+                    $('#sucesora').removeAttr('required');
+                }
+            }
         </script>
 
         <script>
@@ -373,10 +426,7 @@ class html_formPrevisora {
             }
         </script>
 
-
-
-
-        <form id="form" method="post" action="index.php" name='<? echo $this->formulario; ?>' onSubmit="return  ValidateForm();" autocomplete='Off'>
+        <form id="form" method="post" action="index.php" name='<?php echo $this->formulario; ?>' onSubmit="return  ValidateForm();" autocomplete='Off'>
             <h1>Entidades Previsoras y Empleadoras</h1>
 
             <div class="formrow f1">
@@ -430,7 +480,7 @@ class html_formPrevisora {
                     <div class="control capleft">
                         <div>
                             <div class="dropdown">
-                                <select id="p1f13c" name="estado" required='required' class="fieldcontent"><option value="ACTIVA">ACTIVA</option><option value="INACTIVA">INACTIVA</option></select>
+                                <select id="p1f13c" name="estado" onchange="showDiv(this)" required='required' class="fieldcontent"><option value="ACTIVA">ACTIVA</option><option value="INACTIVA">INACTIVA</option></select>
                                 <div class="fielderror"></div>
                             </div>
                         </div>
@@ -440,6 +490,42 @@ class html_formPrevisora {
                 </div>
                 <div class="null"></div>
             </div>
+
+            <div class="formrow f1" id="oculto" style='display:none;'>
+                <div id="p1f6" class="field n1">
+                    <div class="caption capleft alignleft">
+                        <label class="fieldlabel" for="p1f6c"><span><span class="pspan arial" style="text-align:left;font-size:14px;"><span class="ispan" style="color:#9393FF" xml:space="preserve"><a STYLE="color: red" >* </a>Entidad Sucesora</span></span></span></label>
+                        <div class="null"></div>
+                    </div>
+                    <div class="control capleft">
+                        <div class="control capleft">
+                            <div class="dropdown"  title="*Campo Obligatorio">
+
+                                <?php
+                                unset($combo);
+                                //prepara los datos como se deben mostrar en el combo
+                                $combo[0][0] = '0';
+                                $combo[0][1] = 'sucesora';
+                                foreach ($datos_previsora as $cmb => $values) {
+                                    $combo[$cmb][0] = isset($datos_previsora[$cmb]['prev_nit']) ? $datos_previsora[$cmb]['prev_nit'] : 0;
+                                    $combo[$cmb][1] = isset($datos_previsora[$cmb]['prev_nombre']) ? $datos_previsora[$cmb]['prev_nombre'] : '';
+                                }
+
+                                $lista_combo = $this->html->cuadro_lista($combo, 'sucesora', $this->configuracion, 0, 0, FALSE, 0, 'sucesora');
+
+                                echo $lista_combo;
+                                ?> 
+
+                            </div>
+                        </div>
+
+                        <div class="null"></div>
+                    </div>
+                    <div class="null"></div>
+                </div>
+                <div class="null"></div>
+            </div>
+
 
             <div class="formrow f1">
                 <div id="p1f6" class="field n1">
@@ -640,10 +726,10 @@ class html_formPrevisora {
             <input type='hidden' name='action' value='<? echo $this->formulario; ?>'>
 
         </form>
-        <?
+        <?php
     }
 
-    function modificarPrevisora($depto, $mun, $datos_entidad) {
+    function modificarPrevisora($depto, $mun, $datos_entidad, $datos_previsora) {
 
         $this->formulario = "formPrevisora";
 
@@ -654,7 +740,7 @@ class html_formPrevisora {
         <!referencias a estilos y plugins>
         <script type="text/javascript" src="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["plugins"]; ?>/datepicker/js/datepicker.js"></script>
         <link	href="<? echo $this->configuracion["host"] . $this->configuracion["site"] . $this->configuracion["bloques"] ?>/nomina/cuotas_partes/formPrevisora/form_estilo.css"	rel="stylesheet" type="text/css" />
-        <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+              <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
         <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
 
@@ -674,6 +760,17 @@ class html_formPrevisora {
 
                     if (letras.indexOf(tecla) == -1 && !tecla_especial) {
                         return false;
+                    }
+                }
+
+                function showDiv(elem) {
+                    if (elem.value == 'INACTIVA') {
+                        $('#sucesora').attr('required');
+                        document.getElementById('oculto').style.display = "block";
+                    }
+                    if (elem.value == 'ACTIVA') {
+                        document.getElementById('oculto').style.display = "none";
+                        $('#sucesora').removeAttr('required');
                     }
                 }
         </script>
@@ -851,7 +948,7 @@ class html_formPrevisora {
             }
         </script>
 
-        <form id="form" method="post" action="index.php" name='<? echo $this->formulario; ?>' onSubmit="return  ValidateForm();" autocomplete='Off'>
+        <form id="form" method="post" action="index.php" name='<?php echo $this->formulario; ?>' onSubmit="return  ValidateForm();" autocomplete='Off'>
             <h1>Entidades Previsoras y Empleadoras</h1>
 
             <div class="formrow f1">
@@ -905,10 +1002,45 @@ class html_formPrevisora {
                     <div class="control capleft">
                         <div>
                             <div class="dropdown">
-                                <select id="p1f13c" name="estado" required='required' class="fieldcontent" value="<?php echo $datos_entidad["prev_nit"] ?>"><option value="ACTIVA">ACTIVA</option><option value="INACTIVA">INACTIVA</option></select>
+                                <select id="p1f13c" name="estado" required='required'  onchange="showDiv(this)"  class="fieldcontent" value="<?php echo $datos_entidad["prev_habilitado_pago"] ?>"><option value="ACTIVA">ACTIVA</option><option value="INACTIVA">INACTIVA</option></select>
                                 <div class="fielderror"></div>
                             </div>
                         </div>
+                        <div class="null"></div>
+                    </div>
+                    <div class="null"></div>
+                </div>
+                <div class="null"></div>
+            </div>
+
+            <div class="formrow f1" id="oculto" style='display:none;'>
+                <div id="p1f6" class="field n1">
+                    <div class="caption capleft alignleft">
+                        <label class="fieldlabel" for="p1f6c"><span><span class="pspan arial" style="text-align:left;font-size:14px;"><span class="ispan" style="color:#9393FF" xml:space="preserve"><a STYLE="color: red" >* </a>Entidad Sucesora</span></span></span></label>
+                        <div class="null"></div>
+                    </div>
+                    <div class="control capleft">
+                        <div class="control capleft">
+                            <div class="dropdown"  title="*Campo Obligatorio">
+
+                                <?php
+                                unset($combo);
+                                //prepara los datos como se deben mostrar en el combo
+                                $combo[0][0] = '0';
+                                $combo[0][1] = 'Sucesora';
+                                foreach ($datos_previsora as $cmb => $values) {
+                                    $combo[$cmb][0] = isset($datos_previsora[$cmb]['prev_nit']) ? $datos_previsora[$cmb]['prev_nit'] : 0;
+                                    $combo[$cmb][1] = isset($datos_previsora[$cmb]['prev_nombre']) ? $datos_previsora[$cmb]['prev_nombre'] : '';
+                                }
+
+                                $lista_combo = $this->html->cuadro_lista($combo, 'sucesora', $this->configuracion, 0, 0, FALSE, 0, 'sucesora');
+
+                                echo $lista_combo;
+                                ?> 
+
+                            </div>
+                        </div>
+
                         <div class="null"></div>
                     </div>
                     <div class="null"></div>
@@ -1119,11 +1251,11 @@ class html_formPrevisora {
 
             <input type='hidden' name='opcion' value='actualizarPrevisora'>
             <input type='hidden' name='serial' value='<? echo $datos_entidad['prev_serial'] ?>'>
-            <input type='hidden' name='action' value='<? echo $this->formulario; ?>'>
+                   <input type='hidden' name='action' value='<? echo $this->formulario; ?>'>
 
 
         </form>
-        <?
+        <?php
     }
 
 }
